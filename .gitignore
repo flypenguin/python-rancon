@@ -1,0 +1,18 @@
+# pip / setuptools stuff
+dist/
+MANIFEST
+*.egg-info
+build/
+__pycache__
+/output/
+
+# project data
+ignoreme/
+*.pyc
+
+# ide files
+*.sublime-*
+.idea/
+
+# stuff
+tmp/
