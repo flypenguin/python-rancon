@@ -1,0 +1,14 @@
+---
+file:
+  backends:
+    backend1:
+      servers:
+        server1:
+          url: http://192.168.119.93:8888
+  frontends:
+    frontend1:
+      backend: backend2
+      routes:
+        test_1:
+          rule: Host:shalala.com
+
