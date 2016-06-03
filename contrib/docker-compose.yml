@@ -1,0 +1,9 @@
+consul:
+  image: progrium/consul
+  command: -server -bootstrap -ui-dir /ui
+  hostname: node1
+  ports:
+    - "18500:8500"
+    - "18400:8400"
+    - "10053:53"
+  

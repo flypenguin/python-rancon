@@ -2,6 +2,13 @@ import sys
 
 
 def fail(message):
+    if isinstance(message, list) or isinstance(message, tuple):
+        if len(message) > 1:
+            message = "\n  - " + "\n  - ".join(message)
+        else:
+            message = " " + message[0]
+    else:
+        message = " " + message
     print("FATAL:%s" % message)
     sys.exit(-1)
 

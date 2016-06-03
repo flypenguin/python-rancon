@@ -17,39 +17,25 @@ rancon is able to remove services which are no longer available in rancher.
 """
 
 from rancon import settings
-
-from cattleprod import poke
+from rancon import tools
 
 import sys
-from collections import defaultdict
 
 
 def get_previously_created_consul_services():
     return []
 
 
-def get_routable_services():
-    starting_point = poke(settings.args.rancher_url)
-    rv = defaultdict(list)
-    for env in starting_point.get_environments():
-        for service in env.get_services():
-            if "rancon.routing" in service.data.fields.launchConfig.labels:
-                rv[env.name].append(service)
-    return rv
-
-
 def route_services():
-    existing_service_ids = get_previously_created_consul_services()
-    envs_services = get_routable_services()
-
-    for env, services in envs_services.items():
-        for srv in services:
-            print("Found routable service %s.%s" % (srv.name, env))
+    backend = settings.backend
+    source = settings.source
+    routed_services = source.get_services()
+    for service in routed_services:
+        backend.register(service)
 
 
 def start(sys_argv):
     settings.parse_params(sys_argv)
-    #while True:
     route_services()
 
 
