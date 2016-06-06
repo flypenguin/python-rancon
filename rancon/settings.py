@@ -3,6 +3,7 @@ from rancon.tools import fail
 import importlib as il
 from argparse import ArgumentParser as AP
 from os import environ
+from collections import defaultdict
 
 args = None
 backend = None
@@ -15,6 +16,23 @@ def _parse_params_opts_env(env_name):
         return opts.split(",")
     else:
         return []
+
+
+def _collapse_options(opts):
+    """
+    Takes a list of 'key=value' strings, and creates a dictionary of the form
+    {'key' : 'value'}. If 'key' is present multiple times, the dictionary will
+    contain a list with all values under the 'key' key.
+    :param opts: A list of strings of the form 'key=val'
+    :return: None
+    """
+    list_opts = [d.split("=", 1) for d in opts]
+    tmp = defaultdict(list)
+    for k, v in list_opts:
+        tmp[k].append(v)
+    for k, v in tmp.items():
+        tmp[k] = v[0] if len(v) == 1 else v
+    return dict(tmp)
 
 
 def parse_params(sys_argv):
@@ -62,8 +80,8 @@ def parse_params(sys_argv):
     errors = []
 
     # get parameters
-    args.backend_options = dict([d.split("=", 1) for d in args.backend_option])
-    args.source_options = dict([d.split("=", 1) for d in args.source_option])
+    args.backend_options = _collapse_options(args.backend_option)
+    args.source_options = _collapse_options(args.source_option)
     del args.backend_option
     del args.source_option
 

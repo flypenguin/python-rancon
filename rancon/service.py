@@ -7,3 +7,8 @@ class Service(object):
         self.source = source
         self.domain = domain
         self.other = kwargs
+
+    def __str__(self):
+        return "{} ({}:{})".format(
+            self.name, self.host, self.port
+        )

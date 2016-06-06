@@ -11,11 +11,14 @@ class BackendBase(object):
         """
         pass
 
-    def cleanup(self):
+    def cleanup(self, keep_services):
         """
         Performs 'garbage collection' of no-longer-present services. (If a
         service was registered in a previous run, and is no longer present, it
         might have to be removed manually).
-        :return: True on success
+        :param keep_services: A list of services to keep. Each service in the
+        list is a return value from register(), which can be pretty much
+        anything.
+        :return: An integer how many services have been removed.
         """
         pass

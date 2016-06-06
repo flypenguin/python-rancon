@@ -30,8 +30,15 @@ def route_services():
     backend = settings.backend
     source = settings.source
     routed_services = source.get_services()
+    registered_services = []
     for service in routed_services:
-        backend.register(service)
+        rv = backend.register(service)
+        if rv:
+            registered_services.append(rv)
+        else:
+            print("Failed to register service: {}"
+                  .format(service))
+    backend.cleanup(registered_services)
 
 
 def start(sys_argv):
