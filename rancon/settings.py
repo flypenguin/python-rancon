@@ -40,11 +40,6 @@ def parse_params(sys_argv):
     global backend
     global source
     parser = AP()
-    parser.add_argument("-d", "--domain",
-                        help="The domain to check for. Example: If set to 'my."
-                             "domain.com', then the load balancer will react to"
-                             "'servicename.my.domain.com'. CURRENTLY UNUSED.",
-                        action="append")
     parser.add_argument("source",
                         help="Which source to use. Available are: 'rancher'. "
                              "Default: $RANCON_SOURCE or 'rancher'",
