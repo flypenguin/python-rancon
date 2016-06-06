@@ -37,17 +37,26 @@ def parse_params(sys_argv):
                              "Default: $RANCON_BACKEND",
                         default=environ.get("RANCON_REGISTRY", None))
     parser.add_argument("-s", "--source-option",
-                        help="Specify options for the available sources. "
+                        help="Specify options for the available sources using "
+                             "the format 'a=b'. "
                              "Default: $SOURCE_OPTIONS (which should look "
                              "like 'O1=V1,O2=V2,...')",
                         action="append",
                         default=_parse_params_opts_env('FRONTEND_OPTIONS '))
     parser.add_argument("-b", "--backend-option",
-                        help="Specify options for the available registries. "
+                        help="Specify options for the available registries "
+                             "using the format 'a=b'. "
                              "Default: $REGISTRY_OPTIONS (which should look "
                              "like 'O1=V1,O2=V2,...')",
                         action="append",
                         default=_parse_params_opts_env('BACKEND_OPTIONS'))
+    parser.add_argument("-i", "--id",
+                        help="Instance ID of this process, used 'garbage "
+                             "collecting' services which are no longer present,"
+                             "in case of multiple rancon instances which see "
+                             "different services. Default: $RANCON_ID or "
+                             "'default'",
+                        default=environ.get('RANCON_ID', 'default'))
 
     args = parser.parse_args(sys_argv)
     errors = []
@@ -67,10 +76,16 @@ def parse_params(sys_argv):
             got_class = i.get()
             for ropt in got_class.required_opts:
                 if ropt not in a[3]:
-                    errors.append("Missing required '{}' option: {} {}=..."
-                                  .format(a[1], a[2], ropt))
+                    errors.append("Missing option for {} '{}': {} {}=..."
+                                  .format(a[0], a[1], a[2], ropt))
         except ImportError:
             errors.append("Invalid source type: {}".format(args.backend))
+
+        for opt in a[3].keys():
+            if not (opt in got_class.required_opts or
+                    opt in got_class.additional_opts):
+                errors.append("Unkonwn option for {} '{}': {}"
+                              .format(a[0], a[1], opt))
 
         if len(errors) == 0:
             classes.append(got_class(**a[3]))

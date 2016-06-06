@@ -1,7 +1,7 @@
 class SourceBase(object):
 
-    def register(self, host, port, **kwargs):
-        pass
+    required_opts = ()
+    additional_opts = ()
 
-    def cleanup(self):
+    def get_services(self, **kwargs):
         pass

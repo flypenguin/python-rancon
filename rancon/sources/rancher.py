@@ -14,7 +14,7 @@ class RancherSource(SourceBase):
         self.access = accesskey
         self.secret = secretkey
 
-    def get_services(self):
+    def get_services(self, **_):
         starting_point = poke(self.url)
         rv = []
         for service in starting_point.get_services():
