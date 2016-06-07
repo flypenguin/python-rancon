@@ -1,4 +1,7 @@
-class SourceBase(object):
+from rancon.common import CommonBase
+
+
+class SourceBase(CommonBase):
 
     required_opts = ()
     additional_opts = ()

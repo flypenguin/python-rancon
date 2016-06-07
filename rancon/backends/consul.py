@@ -26,7 +26,7 @@ class ConsulBackend(BackendBase):
                                         scheme=parsed_url.scheme)
 
     def register(self, service):
-        svc_id = self._tag_map(self.id_schema, service)
+        svc_id = self._tag_replace(self.id_schema, service)
         success = self.consul.agent.service.register(
             service.name,
             svc_id,
@@ -55,7 +55,7 @@ class ConsulBackend(BackendBase):
                 con.agent.service.deregister(svc_id)
 
     def _get_tags(self, service):
-        return [self._tag_map(x, service) for x in self.tags] + \
+        return [self._tag_replace(x, service) for x in self.tags] + \
                [self._get_cleanup_tag_for(settings.args.id),
                 'rancon']
 
