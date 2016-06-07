@@ -1,0 +1,48 @@
+global
+  pidfile /tmp/haproxy.pid
+  # daemon
+  # maxconn 256
+
+defaults
+  mode %HAPROXY_DEFAULT%
+  timeout connect %HAPROXY_TIMEOUT_CONNECT%
+  timeout client  %HAPROXY_TIMEOUT_CLIENT%
+  timeout server  %HAPROXY_TIMEOUT_SERVER%
+
+# https://github.com/hashicorp/consul-template/issues/33
+
+frontend http
+    bind 0.0.0.0:8080
+    {{- range services -}}
+    {{- if in .Tags "%CONSUL_TAG%" }}
+    acl is-api-{{.Name}}-path hdr(host) -m str {{.Name}}.%TARGET_DOMAIN%
+    use_backend {{.Name}} if is-api-{{.Name}}-path
+    {{- end -}}
+    {{- end  }}
+
+# this port ONLY redirects to the https:// scheme for *anything* that comes in
+# this is intended for use with another ssl load balancer in front of this
+# haproxy instance, otherwise we'd have a circular redirection loop
+frontend httptwo
+    bind 0.0.0.0:8443
+    redirect scheme https code 301 if !{ ssl_fc }
+
+{{  range services -}}
+{{- if in .Tags "%CONSUL_TAG%" -}}
+backend {{.Name}}{{$services:=service .Name "passing"}}
+  {{- if gt (len $services) 0 }}
+  mode http
+  option http-server-close
+  balance roundrobin{{range $services}}
+  server {{.ID}} {{.Address}}:{{.Port}} check
+  {{ end  }}
+
+{{-  else }}
+  server dead 127.0.0.1:81/{{.Name}} # 503
+{{ end }}
+{{ end -}}
+{{- end }}
+
+listen admin
+  bind 0.0.0.0:8080
+  stats enable
