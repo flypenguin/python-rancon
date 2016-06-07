@@ -2,48 +2,59 @@ from . import SourceBase
 from rancon.service import Service
 
 from cattleprod import poke
+from dotmap import DotMap
 
 
 class RancherSource(SourceBase):
 
     required_opts = ('url',)
-    additional_opts = ('accesskey', 'secretkey')
+    additional_opts = ('accesskey', 'secretkey', 'default_name_scheme')
 
-    def __init__(self, url, accesskey=None, secretkey=None):
+    def __init__(self, url, accesskey=None, secretkey=None,
+                 default_name_scheme='%NAME%'):
         self.url = url
         self.access = accesskey
         self.secret = secretkey
+        self.default_name_scheme = default_name_scheme
+        self.cache = DotMap()
 
     def get_services(self, **_):
         starting_point = poke(self.url)
         rv = []
-        stacks = {}
+        services = []
+        # get all services with rancon(\..+) labels
         for service in starting_point.get_services():
-            if "rancon.routing" in service.data.fields.launchConfig.labels:
-                endpoints = service.data.fields.publicEndpoints
-                if len(endpoints) > 1:
-                    print("RANCHER: WARNING: > 1 endpoints for service '{}'. "
-                          "Ignoring."
-                          .format(service.name))
-                elif len(endpoints) == 0:
-                    print(
-                        "RANCHER: WARNING: No public endpoints "
-                        "for service '{}'. Ignoring."
-                        .format(service.name))
-                else:
-                    host = endpoints[0]['ipAddress']
-                    port = endpoints[0]['port']
-                    stacks[service.links.environment] = None
-                    rv.append(Service(name=service.name,
-                                      host=host, port=port, source=service))
-        # find names for the stacks in the services, limit rancher calls (one
-        # for all services, one for each stack) instead of 2x per service
-        for stack in stacks.keys():
-            stack_service = poke(stack)
-            stacks[stack] = stack_service.name
-        for service in rv:
-            service.meta['stack'] = stacks[service.source.links.environment]
+            labels = service.data.fields.launchConfig.labels
+            for label in labels:
+                if label == 'rancon' or label.startswith("rancon."):
+                    services.append(service)
+                    break
+            else:
+                continue
+        # create service instances
+        for service in services:
+            endpoints = service.data.fields.publicEndpoints
+            labels = service.data.fields.launchConfig.labels
+            for endpoint in endpoints:
+                meta = {k.split(".", 1)[1].replace(".", "_"): v
+                        for k, v in labels.items()
+                        if k.startswith('rancon.')}
+                meta['host'] = endpoint['ipAddress']
+                meta['port'] = endpoint['port']
+                meta['service'] = service.name
+                meta['stacḱ'] = self._get_name_for(service.links.environment)
+                meta['environment'] = self._get_name_for(service.links.account)
+                if 'name' not in meta:
+                    meta['name'] = service.name
+                svc = Service(source=service, **meta)
+                rv.append(svc)
+        # return service instances
         return rv
+
+    def _get_name_for(self, url):
+        if not self.cache[url]:
+            self.cache[url] = poke(url).name
+        return self.cache[url]
 
 
 def get():
