@@ -1,10 +1,11 @@
 CHANGELOG
 =========
 
-0.0.1
+0.5.0
 -----
 
-Date: 2016-05-11
+Date: 2016-06-07
 
-- initial commit
-
+- Initial PyPI release
+- module works, docker setup not tested yet
+- documentation unfinished / not present
