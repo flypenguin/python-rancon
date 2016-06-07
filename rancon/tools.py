@@ -1,4 +1,8 @@
 import sys
+from re import compile
+
+
+tag_matcher = compile("%([A-Z0-9]+)%")
 
 
 def fail(message):
@@ -20,3 +24,18 @@ def is_true(something):
         return something != 0
     else:
         return bool(something)
+
+
+def tag_replace(line, replacement_dict):
+    """
+    Replaces a tag content with replacement information from the given
+    replacement hash. The replacement must exist.
+    :param line: The tag value
+    :param replacement_dict: The hash to use for the replacements
+    :return: The processed string
+    """
+    tags = tag_matcher.findall(line)
+    for tag in tags:
+        line = line.replace("%{}%".format(tag),
+                            str(getattr(replacement_dict, tag.lower())))
+    return line
