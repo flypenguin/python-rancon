@@ -17,22 +17,32 @@ class RancherSource(SourceBase):
     def get_services(self, **_):
         starting_point = poke(self.url)
         rv = []
+        stacks = {}
         for service in starting_point.get_services():
             if "rancon.routing" in service.data.fields.launchConfig.labels:
                 endpoints = service.data.fields.publicEndpoints
                 if len(endpoints) > 1:
-                    print("WARNING: more than one endpoint for service {},\n"
-                          "         don't know what to do."
+                    print("RANCHER: WARNING: > 1 endpoints for service '{}'. "
+                          "Ignoring."
                           .format(service.name))
                 elif len(endpoints) == 0:
                     print(
-                        "WARNING: no public endpoints for service '{}', ignoring."
+                        "RANCHER: WARNING: No public endpoints "
+                        "for service '{}'. Ignoring."
                         .format(service.name))
                 else:
                     host = endpoints[0]['ipAddress']
                     port = endpoints[0]['port']
+                    stacks[service.links.environment] = None
                     rv.append(Service(name=service.name,
                                       host=host, port=port, source=service))
+        # find names for the stacks in the services, limit rancher calls (one
+        # for all services, one for each stack) instead of 2x per service
+        for stack in stacks.keys():
+            stack_service = poke(stack)
+            stacks[stack] = stack_service.name
+        for service in rv:
+            service.meta['stack'] = stacks[service.source.links.environment]
         return rv
 
 
