@@ -10,7 +10,7 @@ from urllib.parse import urlparse as up
 class ConsulBackend(BackendBase):
 
     required_opts = ('url',)
-    additional_opts = ('tag', 'id_schema')
+    additional_opts = ('id_schema',)
 
     def __init__(self, url, tag=[],
                  id_schema='%NAME%_%HOST%_%PORT%'):
@@ -56,9 +56,12 @@ class ConsulBackend(BackendBase):
                 con.agent.service.deregister(svc_id)
 
     def _get_tags(self, service):
-        return [tag_replace(x, service) for x in self.tags] + \
+        tag_list_str = service.get('tag', '')
+        tag_list = tag_list_str.split(",") if tag_list_str else []
+        tmp =  [tag_replace(x, service).strip() for x in tag_list] + \
                [self._get_cleanup_tag_for(settings.args.id),
                 'rancon']
+        return tmp
 
 
 def get():

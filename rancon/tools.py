@@ -26,7 +26,7 @@ def is_true(something):
         return bool(something)
 
 
-def tag_replace(line, replacement_dict):
+def tag_replace(line, replacement_dict, default="UNDEFINED"):
     """
     Replaces a tag content with replacement information from the given
     replacement hash. The replacement must exist.
@@ -36,6 +36,6 @@ def tag_replace(line, replacement_dict):
     """
     tags = tag_matcher.findall(line)
     for tag in tags:
-        line = line.replace("%{}%".format(tag),
-                            str(getattr(replacement_dict, tag.lower())))
+        replacement = str(replacement_dict.get(tag.lower(), default))
+        line = line.replace("%{}%".format(tag), replacement)
     return line

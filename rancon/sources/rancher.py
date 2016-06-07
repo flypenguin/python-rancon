@@ -42,7 +42,7 @@ class RancherSource(SourceBase):
                 meta['host'] = endpoint['ipAddress']
                 meta['port'] = endpoint['port']
                 meta['service'] = service.name
-                meta['stacḱ'] = self._get_name_for(service.links.environment)
+                meta['stack'] = self._get_name_for(service.links.environment)
                 meta['environment'] = self._get_name_for(service.links.account)
                 if 'name' not in meta:
                     meta['name'] = service.name

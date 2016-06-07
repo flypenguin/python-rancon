@@ -92,7 +92,7 @@ def parse_params(sys_argv):
                     errors.append("Missing option for {} '{}': {} {}=..."
                                   .format(a[0], a[1], a[2], ropt))
         except ImportError:
-            errors.append("Invalid source type: {}".format(args.backend))
+            errors.append("Invalid source type: {}".format(a[1]))
 
         for opt in a[3].keys():
             if not (opt in got_class.required_opts or
