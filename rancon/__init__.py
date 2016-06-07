@@ -22,10 +22,6 @@ from rancon import tools
 import sys
 
 
-def get_previously_created_consul_services():
-    return []
-
-
 def route_services():
     backend = settings.backend
     source = settings.source
