@@ -20,6 +20,7 @@ from rancon import settings
 from rancon import tools
 
 import sys
+from time import sleep, ctime
 
 
 def route_services():
@@ -38,9 +39,13 @@ def route_services():
 
 
 def start(sys_argv):
+    print("RANCON: start @ {}".format(ctime()))
     settings.parse_params(sys_argv)
     route_services()
-
+    while settings.args.continuous:
+        sleep(settings.args.wait)
+        route_services()
+    print("RANCON: Done.")
 
 def console_entrypoint():
     start(sys.argv[1:])

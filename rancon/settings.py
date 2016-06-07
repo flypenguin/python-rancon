@@ -70,6 +70,20 @@ def parse_params(sys_argv):
                              "different services. Default: $RANCON_ID or "
                              "'default'",
                         default=environ.get('RANCON_ID', 'default'))
+    parser.add_argument("-c", "--continuous",
+                        help="Continuous mode - keep running and perform "
+                             "regular updates. Use -w to configure update wait "
+                             "intervals. "
+                             "Default: $RANCON_FOREGROUND (presence of env "
+                             "variable is true, the setting does not matter), "
+                             "or False",
+                        action='store_true',
+                        default=bool(environ.get("RANCON_FOREGROUND", False)))
+    parser.add_argument("-w", "--wait",
+                        help="How many seconds to wait between runs if -f is "
+                             "used. Default: $RANCON_WAIT or 5",
+                        type=int,
+                        default=int(environ.get("RANCON_WAIT", "5")))
 
     args = parser.parse_args(sys_argv)
     errors = []
