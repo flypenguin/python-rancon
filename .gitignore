@@ -7,11 +7,7 @@ __pycache__
 /output/
 
 # stuff in this project
-rancher/haproxy_template.consul
-rancher/consul-template
-rancher/haproxy.pid
-rancher/haproxy.cfg
-rancher/nohup.out
+/rancher_run
 *.log
 
 # project data

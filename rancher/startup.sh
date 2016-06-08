@@ -1,7 +1,24 @@
 #!/usr/bin/env bash
 
+# WE NEED THE FOLLOWING ENV VARIABLES:
+#
+#     CONSUL_TAG - services with this tag in consul are picked up by
+#                  haproxy and load balanced
+#
+#     CONSUL_ADDRESS - the address of the consul service. must be a single
+#                      host name, without scheme or port information
+#                      (example: 'consul-server')
+#                      NOTE: consul *MUST* run on port 8500!!
+#
+#     TARGET_DOMAIN - the domain to compare to (SERVICE.TARGET_DOMAIN)
+#
+#     CATTLE_CONFIG_URL - the URL to the rancher API
+#                         (example: 'http://rancher.my.domain/v1')
+
+set -e
+
 fail() {
-  echo "FATAL: $1"
+  echo -e "FATAL: $1"
   exit -1
 }
 
@@ -13,10 +30,12 @@ waitfor() {
   echo "found."
 }
 
-cd rancher
-
-[ "$CONSUL_TAG" == "" ] && fail "\$CONSUL_TAG is empty"
-[ "$TARGET_DOMAIN" == "" ] && fail "\$TARGET_DOMAIN is empty"
+ERROR=""
+[ "$CONSUL_TAG" == "" ] && ERROR="${ERROR}\n - \$CONSUL_TAG is empty"
+[ "$TARGET_DOMAIN" == "" ] && ERROR="${ERROR}\n - \$TARGET_DOMAIN is empty"
+[ "$CONSUL_ADDRESS" == "" ] && ERROR="${ERROR}\n - \$CONSUL_ADDRESS is empty"
+[ "$CATTLE_CONFIG_URL" == "" ] && ERROR="${ERROR}\n - \$CATTLE_CONFIG_URL is empty"
+[ "$ERROR" != "" ] && fail "$ERROR"
 
 HAPROXY_DEFAULT_DEFAULT=http
 HAPROXY_TIMEOUT_CONNECT_DEFAULT=2000ms
@@ -32,26 +51,33 @@ cat haproxy_template.script  | \
       -e "s?%TARGET_DOMAIN%?${TARGET_DOMAIN}?g" \
   haproxy_template.script > haproxy_template.consul
 
+
+# start.
+
 # first, run consul-template
 rm -f haproxy.pid *.log
 touch haproxy.pid
 
 # here, consul must be just the host name, witOUT scheme, but WITH port.
 # imPORTant, haha. (stupid fuck)
-echo starting consul-template
+echo STARTUP starting consul-template
 nohup ./consul-template -wait 5s:10s -consul $CONSUL_ADDRESS:8500 -config ./consul-template.cfg >> consul-template.log 2>&1 &
 
 # we try to do this: http://engineeringblog.yelp.com/2015/04/true-zero-downtime-haproxy-reloads.html
 waitfor haproxy.cfg
-echo restarting haproxy
+echo STARTUP restarting haproxy
 ./restart_haproxy.sh
 
 # here, consul must be a real url with scheme.
-echo starting rancon
+echo STARTUP starting rancon
 nohup rancon rancher consul -c -s url=$CATTLE_CONFIG_URL -b url=http://$CONSUL_ADDRESS >> rancon.log 2>&1 &
 
-echo starting tail
+echo STARTUP starting tail
 waitfor haproxy.log
 waitfor rancon.log
 waitfor consul-template.log
 exec tail -n 100 -f *.log
+
+killall consul-template || true
+killall haproxy || true
+killall rancon || true
