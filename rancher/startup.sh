@@ -72,12 +72,15 @@ echo STARTUP restarting haproxy
 echo STARTUP starting rancon
 nohup rancon rancher consul -c -s url=$CATTLE_CONFIG_URL -b url=http://$CONSUL_ADDRESS >> rancon.log 2>&1 &
 
+# do NOT fail on first non-zero output any longer
+set +e
+
 echo STARTUP starting tail
 waitfor haproxy.log
 waitfor rancon.log
 waitfor consul-template.log
-exec tail -n 100 -f *.log
-
-killall consul-template || true
-killall haproxy || true
-killall rancon || true
+exec tail -n 100 -f *.log || true
+ 
+killall -9 consul-template || true
+killall -9 haproxy || true
+killall -9 rancon || true
