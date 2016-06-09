@@ -52,17 +52,19 @@ def parse_params(sys_argv):
     parser.add_argument("-s", "--source-option",
                         help="Specify options for the available sources using "
                              "the format 'a=b'. "
-                             "Default: $SOURCE_OPTIONS (which should look "
-                             "like 'O1=V1,O2=V2,...')",
+                             "Default: $RANCON_FRONTEND_OPTIONS (which should "
+                             "look like 'O1=V1,O2=V2,...')",
                         action="append",
-                        default=_parse_params_opts_env('FRONTEND_OPTIONS '))
+                        default=_parse_params_opts_env(
+                            'RANCON_FRONTEND_OPTIONS '))
     parser.add_argument("-b", "--backend-option",
                         help="Specify options for the available registries "
                              "using the format 'a=b'. "
-                             "Default: $REGISTRY_OPTIONS (which should look "
-                             "like 'O1=V1,O2=V2,...')",
+                             "Default: $RANCON_BACKEND_OPTIONS (which should "
+                             "look like 'O1=V1,O2=V2,...')",
                         action="append",
-                        default=_parse_params_opts_env('BACKEND_OPTIONS'))
+                        default=_parse_params_opts_env(
+                            'RANCON_BACKEND_OPTIONS'))
     parser.add_argument("-i", "--id",
                         help="Instance ID of this process, used for 'garbage "
                              "collecting' services which are no longer present,"
