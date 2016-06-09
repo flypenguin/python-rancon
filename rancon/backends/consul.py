@@ -12,12 +12,10 @@ class ConsulBackend(BackendBase):
     required_opts = ('url',)
     additional_opts = ('id_schema',)
 
-    def __init__(self, url, tag=[],
-                 id_schema='%NAME%_%HOST%_%PORT%'):
+    def __init__(self, url, id_schema='%NAME%_%HOST%_%PORT%'):
         parsed_url = up(url)
         items = parsed_url.netloc.split(":")
         # can be a list.
-        self.tags = tag if isinstance(tag, list) else [tag]
         self.id_schema = id_schema
         if len(items) == 1:
             self.consul = consul.Consul(host=parsed_url.netloc,
