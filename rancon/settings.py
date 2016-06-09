@@ -105,14 +105,14 @@ def parse_params(sys_argv):
                 if ropt not in a[3]:
                     errors.append("Missing option for {} '{}': {} {}=..."
                                   .format(a[0], a[1], a[2], ropt))
-        except ImportError:
-            errors.append("Invalid source type: {}".format(a[1]))
+            for opt in a[3].keys():
+                if not (opt in got_class.required_opts or
+                                opt in got_class.additional_opts):
+                    errors.append("Unkonwn option for {} '{}': {}"
+                                  .format(a[0], a[1], opt))
 
-        for opt in a[3].keys():
-            if not (opt in got_class.required_opts or
-                    opt in got_class.additional_opts):
-                errors.append("Unkonwn option for {} '{}': {}"
-                              .format(a[0], a[1], opt))
+        except ImportError:
+                errors.append("Invalid {} type: {}".format(a[0], a[1]))
 
         if len(errors) == 0:
             classes.append(got_class(**a[3]))
