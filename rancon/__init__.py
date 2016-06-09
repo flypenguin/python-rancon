@@ -1,19 +1,14 @@
 """
-Crawl through all available rancher services and look for a label with
-the following format:
+Crawls through the 'source' source and looks for labels starting with 'rancon'.
 
-    rancon.routing: true / on / yes / 1
+If such a label is found on a service, then it will register the service in the
+'backend'. If the backend supports tag all services will be tagged 'rancon'.
+depending on the backend the registration behavior can be influenced by tags
+set on the source (e.g. rancon.name, ...).
 
-If a service with this tag is found, it will be published as service
-"SERVICE_NAME" in Consul, and the service will get the tag TAG_NAME (if
-set).
-
-If "rancon.consul.tag" is not found, the tag "rancher_service" is used.
-The tag "rancon" is applied every time.
-
-*All* services created by rancon will be tagged "rancon" in consul, so that
-rancon is able to remove services which are no longer available in rancher.
-
+Every rancon.* tag will be available as variable "%NAME%" in the backend.
+Please look through the documentation to make more sense of this, it is easy
+but just a little bit complex because of the flexibility.
 """
 
 from rancon import settings
@@ -39,13 +34,16 @@ def route_services():
 
 
 def start(sys_argv):
-    print("RANCON: start @ {}".format(ctime()))
+    # prepare
     settings.parse_params(sys_argv)
+    # run
+    print("RANCON: start @ {}".format(ctime()))
     route_services()
     while settings.args.continuous:
         sleep(settings.args.wait)
         route_services()
     print("RANCON: Done.")
+
 
 def console_entrypoint():
     start(sys.argv[1:])
