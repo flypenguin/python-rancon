@@ -2,18 +2,10 @@ FROM python:3-onbuild
 
 MAINTAINER Axel Bock <mr.axel.bock@gmail.com>
 
-EXPOSE 80 443 8080 5000
+# Why-oh-why do I need to use abolute paths here?!? 
+# (no, Docker 1.11.2 - relative paths didn't work).
+# So if I read this next time, I will try, and it will work, and I will wonder,
+# even though it's the same Docker version I bet, and seriously I hate it already.
+# That's life in IT :D
+ENTRYPOINT ["/usr/src/app/rancon.py"]
 
-ENV consul_version 0.14.0
-ENV consul_url https://releases.hashicorp.com/consul-template/${consul_version}/consul-template_${consul_version}_linux_amd64.zip
-
-RUN  \
-       apt-get update && apt-get install -y haproxy unzip \
-    && rm -rf rancher_run ; cp -r rancher rancher_run \
-    && cd rancher_run \
-    && curl -ls $consul_url -o consul.zip \
-    && unzip consul.zip \
-    && rm *.zip
-
-WORKDIR rancher_run
-ENTRYPOINT startup.sh
