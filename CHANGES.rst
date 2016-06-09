@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+0.6.1
+-----
+
+Date: 2016-06-09
+
+- More verbosity during init process
+
+
 0.6.0
 -----
 
