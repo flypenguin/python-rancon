@@ -12,6 +12,11 @@ class RancherSource(SourceBase):
 
     def __init__(self, url, accesskey=None, secretkey=None,
                  default_name_scheme='%NAME%'):
+        print("RANCHER: INIT: url={}".format(url))
+        print("RANCHER: INIT: accesskey={}".format(str(accesskey)))
+        print("RANCHER: INIT: secretkey={}".format(str(secretkey)))
+        print("RANCHER: INIT: default_name_scheme={}".format(
+            default_name_scheme))
         self.url = url
         self.access = accesskey
         self.secret = secretkey

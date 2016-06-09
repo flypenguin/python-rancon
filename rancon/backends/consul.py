@@ -13,6 +13,8 @@ class ConsulBackend(BackendBase):
     additional_opts = ('id_schema',)
 
     def __init__(self, url, id_schema='%NAME%_%HOST%_%PORT%'):
+        print("CONSUL: INIT: url={}".format(url))
+        print("CONSUL: INIT: id_schema={}".format(id_schema))
         parsed_url = up(url)
         items = parsed_url.netloc.split(":")
         # can be a list.
