@@ -1,2 +1,4 @@
-cattleprod==0.6.0
+cattleprod>=0.6.0
 python-consul==0.6.0
+dotmap
+requests
