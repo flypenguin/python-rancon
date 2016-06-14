@@ -20,4 +20,4 @@ if [ ! -z "$CATTLE_ACCESS_KEY" -a ! -z "$CATTLE_SECRET_KEY" ]; then
     ADD_PARAMS="$ADD_PARAMS -s accesskey=$CATTLE_ACCESS_KEY -s secretkey=$CATTLE_SECRET_KEY"
 fi
 
-exec /usr/src/app/rancon.py rancher consul -cw5 $ADD_PARAMS $@
+exec /usr/src/app/rancon.py -cw10 rancher consul $ADD_PARAMS $@
