@@ -38,6 +38,7 @@ def start(sys_argv):
     settings.parse_params(sys_argv)
     # run
     print("RANCON: start @ {}".format(ctime()))
+    print("RANCON: CLEANUP ID: {}".format(settings.args.id))
     route_services()
     while settings.args.continuous:
         sleep(settings.args.wait)
