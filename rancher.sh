@@ -5,7 +5,7 @@
 ADD_PARAMS=""
 
 if [ ! -z "$CATTLE_URL" ]; then
-    echo "STARTUP: detected CATTLE_URL: $CATTLE_URL"
+    echo "STARTUP: Detected CATTLE_URL: $CATTLE_URL"
     ADD_PARAMS="-s url=$CATTLE_URL"
     # we just assume we have rancher metadata access
     ENV_NAME=$(curl http://rancher-metadata/latest/self/stack/environment_name 2>/dev/null)
