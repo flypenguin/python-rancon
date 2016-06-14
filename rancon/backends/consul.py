@@ -35,8 +35,9 @@ class ConsulBackend(BackendBase):
             tags=self._get_tags(service),
         )
         if success:
-            print("CONSUL: REGISTER: {} using {} / {}"
-                  .format(service, service.name, svc_id))
+            print("CONSUL: REGISTER: {} using {} / {} (cleanup id: {})"
+                  .format(service, service.name, svc_id,
+                          self._get_cleanup_tag_for(settings.args.id)))
             return svc_id
         else:
             print("CONSUL: REGISTER: FAILED registering "
