@@ -30,7 +30,7 @@ class RancherSource(SourceBase):
         services = []
         # get all services with rancon(\..+) labels
         for service in starting_point.get_services():
-            labels = service.data.fields.launchConfig.labels
+            labels = service.launchConfig.labels
             for label in labels:
                 if label == 'rancon' or label.startswith("rancon."):
                     services.append(service)
