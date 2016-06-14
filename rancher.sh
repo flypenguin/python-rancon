@@ -2,4 +2,16 @@
 
 # use this script for the rancher catalog service
 
-exec /usr/src/app/rancon.py rancher consul -cw5 -s url=${CATTLE_URL} $@
+ADD_PARAMS=""
+
+if [ ! -z "$CATTLE_URL" ]; then
+    echo "STARTUP: detected CATTLE_URL: $CATTLE_URL"
+    ADD_PARAMS="-s url=$CATTLE_URL"
+fi
+
+if [ ! -z "$CATTLE_ACCESS_KEY" -a ! -z "$CATTLE_SECRET_KEY" ]; then
+    echo "STARTUP: Detected login credentials"
+    ADD_PARAMS="$ADD_PARAMS -s accesskey=$CATTLE_ACCESS_KEY -s secretkey=$CATTLE_SECRET_KEY"
+fi
+
+exec /usr/src/app/rancon.py rancher consul -cw5 $ADD_PARAMS $@
