@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+0.7.0
+-----
+
+Date: 2016-06-15
+
+- FEATURE: authentication now used
+- FIX: bug in service lookup in Rancher
+- OPEN: https connections (untested, *might* work)
+
+
 0.6.1
 -----
 
