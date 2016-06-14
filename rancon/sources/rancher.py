@@ -14,17 +14,18 @@ class RancherSource(SourceBase):
                  default_name_scheme='%NAME%'):
         print("RANCHER: INIT: url={}".format(url))
         print("RANCHER: INIT: accesskey={}".format(str(accesskey)))
-        print("RANCHER: INIT: secretkey={}".format(str(secretkey)))
+        print("RANCHER: INIT: secretkey={}".format('<SET>' if secretkey
+                                                   else None))
         print("RANCHER: INIT: default_name_scheme={}".format(
             default_name_scheme))
         self.url = url
-        self.access = accesskey
-        self.secret = secretkey
+        self.accesskey = accesskey
+        self.secretkey = secretkey
         self.default_name_scheme = default_name_scheme
         self.cache = DotMap()
 
     def get_services(self, **_):
-        starting_point = poke(self.url)
+        starting_point = self._poke(self.url)
         rv = []
         services = []
         # get all services with rancon(\..+) labels
@@ -58,8 +59,20 @@ class RancherSource(SourceBase):
 
     def _get_name_for(self, url):
         if not self.cache[url]:
-            self.cache[url] = poke(url).name
+            self.cache[url] = self._poke(url).name
         return self.cache[url]
+
+    def _poke(self, url, **kwargs):
+        """
+        Wrapper around cattleprod.poke() so we never forget the credentials
+        if given.
+        :param url: The URL to poke
+        :param kwargs: Other arguments for the API
+        :return: The return value of cattleprod.poke()
+        """
+        return poke(url,
+                    accesskey=self.accesskey, secretkey=self.secretkey,
+                    **kwargs)
 
 
 def get():

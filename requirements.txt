@@ -1,2 +1,2 @@
-cattleprod==0.5.0
+cattleprod==0.6.0
 python-consul==0.6.0
