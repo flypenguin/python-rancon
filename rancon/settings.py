@@ -1,13 +1,16 @@
 from rancon.tools import fail
 
 import importlib as il
+import logging as log
 from argparse import ArgumentParser as AP
 from os import environ
 from collections import defaultdict
 
+
 args = None
 backend = None
 source = None
+loglevel = 100
 
 
 def _parse_params_opts_env(env_name):
@@ -39,6 +42,7 @@ def parse_params(sys_argv):
     global args
     global backend
     global source
+    global loglevel
     parser = AP()
     parser.add_argument("source",
                         help="Which source to use. Available are: 'rancher'. "
@@ -86,9 +90,30 @@ def parse_params(sys_argv):
                              "used. Default: $RANCON_WAIT or 5",
                         type=int,
                         default=int(environ.get("RANCON_WAIT", "5")))
+    parser.add_argument("-q", "--quiet",
+                        help="Decreases verbosity level, use multiple times to "
+                             "decrease further. Do not combine with -v. "
+                             "Default: $RANCON_VERBOSE.",
+                        action="count",
+                        default=0)
+    parser.add_argument("-v", "--verbose",
+                        help="Decreases verbosity level, use multiple times to "
+                             "decrease further. Not using -v at all is "
+                             "equivalent to -vvv. Do not combine with -q. "
+                             "Default: $RANCON_VERBOSE or 3",
+                        action="count",
+                        default=int(environ.get('RANCON_VERBOSE', '3')))
 
     args = parser.parse_args(sys_argv)
     errors = []
+
+    # first, logging.
+    log_interval = log.DEBUG-log.NOTSET
+    loglevel = log_interval + log.CRITICAL - \
+               log_interval * args.verbose + \
+               log_interval * args.quiet
+    logformat = "%(name)s: %(message)s"
+    log.basicConfig(format=logformat)
 
     # get parameters
     args.backend_options = _collapse_options(args.backend_option)

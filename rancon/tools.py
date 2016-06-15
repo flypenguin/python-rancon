@@ -1,5 +1,8 @@
+from rancon import settings
+
 import sys
 from re import compile
+from logging import getLogger as loggingGetLogger
 
 
 tag_matcher = compile("%([A-Z0-9]+)%")
@@ -39,3 +42,9 @@ def tag_replace(line, replacement_dict, default="UNDEFINED"):
         replacement = str(replacement_dict.get(tag.lower(), default))
         line = line.replace("%{}%".format(tag), replacement)
     return line
+
+
+def getLogger(*args, **kwargs):
+    logger = loggingGetLogger(*args, **kwargs)
+    logger.setLevel(settings.loglevel)
+    return logger

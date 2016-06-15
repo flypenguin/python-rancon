@@ -19,6 +19,7 @@ from time import sleep, ctime
 
 
 def route_services():
+    log = tools.getLogger(__name__)
     backend = settings.backend
     source = settings.source
     routed_services = source.get_services()
@@ -28,22 +29,27 @@ def route_services():
         if rv:
             registered_services.append(rv)
         else:
-            print("Failed to register service: {}"
-                  .format(service))
+            log.warn("Failed to register service: {}"
+                     .format(service))
+    if len(registered_services) == 0:
+        log.warn("No services registered (of {} services found)"
+                 .format(len(registered_services), len(routed_services)))
     backend.cleanup(registered_services)
+    log.warn("Run completed @ {}".format(ctime()))
 
 
 def start(sys_argv):
     # prepare
     settings.parse_params(sys_argv)
+    # not before here :)
+    log = tools.getLogger(__name__)
     # run
-    print("RANCON: start @ {}".format(ctime()))
-    print("RANCON: CLEANUP ID: {}".format(settings.args.id))
+    log.error("Start @ {}".format(ctime()))
     route_services()
     while settings.args.continuous:
         sleep(settings.args.wait)
         route_services()
-    print("RANCON: Done.")
+    log.info("Exiting.")
 
 
 def console_entrypoint():

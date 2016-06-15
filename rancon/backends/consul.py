@@ -1,5 +1,5 @@
 from rancon import settings
-from rancon.tools import tag_replace
+from rancon.tools import tag_replace, getLogger
 from . import BackendBase
 
 import consul
@@ -13,8 +13,9 @@ class ConsulBackend(BackendBase):
     additional_opts = ('id_schema',)
 
     def __init__(self, url, id_schema='%NAME%_%HOST%_%PORT%'):
-        print("CONSUL: INIT: url={}".format(url))
-        print("CONSUL: INIT: id_schema={}".format(id_schema))
+        self.log = getLogger(__name__)
+        self.log.error("INIT: url={}".format(url))
+        self.log.error("INIT: id_schema={}".format(id_schema))
         parsed_url = up(url)
         items = parsed_url.netloc.split(":")
         # can be a list.
@@ -35,14 +36,14 @@ class ConsulBackend(BackendBase):
             tags=self._get_tags(service),
         )
         if success:
-            print("CONSUL: REGISTER: {} using {} / {} (cleanup id: {})"
-                  .format(service, service.name, svc_id,
-                          self._get_cleanup_tag_for(settings.args.id)))
+            self.log.warn("REGISTER: {} using {} / {} (cleanup id: {})"
+                          .format(service, service.name, svc_id,
+                                  self._get_cleanup_tag()))
             return svc_id
         else:
-            print("CONSUL: REGISTER: FAILED registering "
-                  "service {} using {} / {}"
-                  .format(service, service.name, svc_id))
+            self.log.warn("REGISTER: FAILED registering "
+                          "service {} using {} / {}"
+                          .format(service, service.name, svc_id))
             return None
 
     def cleanup(self, keep_services):
@@ -52,7 +53,7 @@ class ConsulBackend(BackendBase):
             if not svc['Tags'] or check_tag not in svc['Tags']:
                 continue
             if svc_id not in keep_services:
-                print("CONSUL: CLEANUP: de-registering service id {}"
+                self.log.warn("CLEANUP: de-registering service id {}"
                       .format(svc_id))
                 con.agent.service.deregister(svc_id)
 
