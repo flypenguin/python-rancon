@@ -10,16 +10,20 @@ from urllib.parse import urlparse as up
 class ConsulBackend(BackendBase):
 
     required_opts = ('url',)
-    additional_opts = ('id_schema',)
+    additional_opts = ('id_schema', 'cleanup_id')
 
-    def __init__(self, url, id_schema='%NAME%_%HOST%_%PORT%'):
+    def __init__(self, url,
+                 id_schema='%NAME%_%HOST%_%PORT%',
+                 cleanup_id='default'):
         self.log = getLogger(__name__)
         self.log.error("INIT: url={}".format(url))
         self.log.error("INIT: id_schema={}".format(id_schema))
+        self.log.error("INIT: cleanup_id={}".format(cleanup_id))
         parsed_url = up(url)
         items = parsed_url.netloc.split(":")
         # can be a list.
         self.id_schema = id_schema
+        self.cleanup_id = cleanup_id
         if len(items) == 1:
             self.consul = consul.Consul(host=parsed_url.netloc,
                                         scheme=parsed_url.scheme)
@@ -48,7 +52,7 @@ class ConsulBackend(BackendBase):
 
     def cleanup(self, keep_services):
         con = self.consul
-        check_tag = self._get_cleanup_tag_for(settings.args.id)
+        check_tag = self._get_cleanup_tag()
         for svc_id, svc in con.agent.services().items():
             if not svc['Tags'] or check_tag not in svc['Tags']:
                 continue
@@ -61,9 +65,12 @@ class ConsulBackend(BackendBase):
         tag_list_str = service.get('tag', '')
         tag_list = tag_list_str.split(",") if tag_list_str else []
         tmp =  [tag_replace(x, service).strip() for x in tag_list] + \
-               [self._get_cleanup_tag_for(settings.args.id),
+               [self._get_cleanup_tag(),
                 'rancon']
         return tmp
+
+    def _get_cleanup_tag(self):
+        return "cleanup_id_{}".format(self.cleanup_id)
 
 
 def get():

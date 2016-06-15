@@ -25,7 +25,3 @@ class BackendBase(CommonBase):
         :return: An integer how many services have been removed.
         """
         pass
-
-    @staticmethod
-    def _get_cleanup_tag_for(service_id):
-        return "rancon_cleanup_id_{}".format(service_id)

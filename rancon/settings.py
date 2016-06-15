@@ -69,13 +69,6 @@ def parse_params(sys_argv):
                         action="append",
                         default=_parse_params_opts_env(
                             'RANCON_BACKEND_OPTIONS'))
-    parser.add_argument("-i", "--id",
-                        help="Instance ID of this process, used for 'garbage "
-                             "collecting' services which are no longer present,"
-                             "in case of multiple rancon instances which see "
-                             "different services. Default: $RANCON_ID or "
-                             "'default'",
-                        default=environ.get('RANCON_ID', 'default'))
     parser.add_argument("-c", "--continuous",
                         help="Continuous mode - keep running and perform "
                              "regular updates. Use -w to configure update wait "
