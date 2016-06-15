@@ -50,8 +50,8 @@ class RancherSource(SourceBase):
                        "checking for endpoints"
                        .format(len(services)))
         for service in services:
-            endpoints = service.data.fields.publicEndpoints
-            labels = service.data.fields.launchConfig.labels
+            endpoints = service.publicEndpoints or []
+            labels = service.launchConfig.labels
             for endpoint in endpoints:
                 meta = {k.split(".", 1)[1].replace(".", "_"): v
                         for k, v in labels.items()
