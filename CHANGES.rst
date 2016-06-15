@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+0.8.0
+-----
+
+Date: 2016-06-15
+
+- BREAKING: ``-i/--id`` parameter no longer global, moved to ``cleanup_id`` parameter of backend
+- CHANGE: output now logging based, so all to stderr, and -vvvv flags possible
+- FIX: bug in service lookup in Rancher
+- OPEN: https connections
+
+
 0.7.0
 -----
 
