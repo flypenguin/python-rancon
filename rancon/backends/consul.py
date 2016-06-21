@@ -58,7 +58,7 @@ class ConsulBackend(BackendBase):
                 continue
             if svc_id not in keep_services:
                 self.log.warn("CLEANUP: de-registering service id {}"
-                      .format(svc_id))
+                              .format(svc_id))
                 con.agent.service.deregister(svc_id)
 
     def _get_tags(self, service):
