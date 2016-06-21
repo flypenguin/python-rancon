@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+0.9.0
+-----
+
+Date: 2016-06-15
+
+- CHANGE: convert IDs, tags, names to all lowercase in consul
+- CHANGE: do not allow non-url characters in service IDs (basically nothing but [a-z0-9-])
+
+
 0.8.0
 -----
 
