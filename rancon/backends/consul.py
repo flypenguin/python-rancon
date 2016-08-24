@@ -71,7 +71,7 @@ class ConsulBackend(BackendBase):
                 'rancon']
 
     def _get_cleanup_tag(self):
-        return "rancon_cleanup_id_{}".format(self.cleanup_id)
+        return "rancon-cleanup-id-{}".format(self.cleanup_id)
 
     def _get_service_id(self, service):
         tmp = tag_replace(self.id_schema, service).lower()
