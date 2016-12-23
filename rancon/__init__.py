@@ -11,29 +11,33 @@ Please look through the documentation to make more sense of this, it is easy
 but just a little bit complex because of the flexibility.
 """
 
-from rancon import settings
-from rancon import tools
-
 import sys
 from time import sleep, ctime
 
+from rancon import settings
+from rancon import tools
+
 
 def route_services():
+    """ checks for services to register and then  """
     log = tools.getLogger(__name__)
     backend = settings.backend
     source = settings.source
-    routed_services = source.get_services()
+    services_to_route = source.get_services()
     registered_services = []
-    for service in routed_services:
-        rv = backend.register(service)
-        if rv:
-            registered_services.append(rv)
+
+    for service in services_to_route:
+        routed_service = backend.register(service)
+        if routed_service is None:
+            log.warn("Failed to register service: {}".format(service))
         else:
-            log.warn("Failed to register service: {}"
-                     .format(service))
+            registered_services.append(routed_service)
+
     if len(registered_services) == 0:
-        log.warn("No services registered (of {} services found)"
-                 .format(len(registered_services), len(routed_services)))
+        # To ABK: got rid of the warning [only one format {} was defined]
+        # but don't know what you wanted to do here.
+        log.warn("No services registered (of {} + {} services found)"
+                 .format(len(registered_services), len(services_to_route)))
     backend.cleanup(registered_services)
     log.warn("Run completed @ {}".format(ctime()))
 
