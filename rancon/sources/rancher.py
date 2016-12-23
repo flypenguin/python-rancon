@@ -1,13 +1,13 @@
-from . import SourceBase
-from rancon.service import Service
-
+""" source definition for rancher source """
 from cattleprod import poke
 from dotmap import DotMap
 
+from rancon.service import Service
 from rancon.tools import getLogger
-
+from . import SourceBase
 
 class RancherSource(SourceBase):
+    """ describes a source for rancher """
 
     required_opts = ('url',)
     additional_opts = ('accesskey', 'secretkey', 'default_name_scheme')
@@ -27,28 +27,32 @@ class RancherSource(SourceBase):
         self.default_name_scheme = default_name_scheme
         self.cache = DotMap()
 
+    def is_rancon(self, service):
+        """ Checks if service has a rancon label """
+        labels = service.launchConfig.labels
+        self.log.debug("EVAL: service '{}' (labels: '{}'".format(
+            service.name, ",".join(labels.keys())))
+        for label in labels:
+            if label == 'rancon' or label.startswith("rancon."):
+                self.log.info("EVAL: found matching service '{}' "
+                              "by label '{}'"
+                              .format(service.name, label))
+                return True
+        return False
+
     def get_services(self, **_):
         starting_point = self._poke(self.url)
-        rv = []
-        services = []
+        routable_services = []
+
         # get all services with rancon(\..+) labels
-        for service in starting_point.get_services():
-            labels = service.launchConfig.labels
-            self.log.debug("EVAL: service '{}' (labels: '{}'"
-                           .format(service.name, ",".join(labels.keys())))
-            for label in labels:
-                if label == 'rancon' or label.startswith("rancon."):
-                    self.log.info("EVAL: found matching service '{}' "
-                                   "by label '{}'"
-                                   .format(service.name, label))
-                    services.append(service)
-                    break
-            else:
-                continue
+        services = [
+            s for s in starting_point.get_services if self.is_rancon(s)]
+
         # create service instances
         self.log.debug("EVAL: found {} potential services by tag, "
                        "checking for endpoints"
                        .format(len(services)))
+
         for service in services:
             endpoints = service.publicEndpoints or []
             labels = service.launchConfig.labels
@@ -64,10 +68,12 @@ class RancherSource(SourceBase):
                 if 'name' not in meta:
                     meta['name'] = service.name
                 svc = Service(source=service, **meta)
-                rv.append(svc)
+                routable_services.append(svc)
+
         # return service instances
-        self.log.info("EVAL: found {} routable services".format(len(rv)))
-        return rv
+        self.log.info("EVAL: found {} routable services".format(
+            len(routable_services)))
+        return routable_services
 
     def _get_name_for(self, url):
         if not self.cache[url]:
@@ -88,4 +94,5 @@ class RancherSource(SourceBase):
 
 
 def get():
+    """ returns this modules class """
     return RancherSource

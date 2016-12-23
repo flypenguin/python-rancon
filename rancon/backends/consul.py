@@ -1,13 +1,15 @@
-from rancon.tools import tag_replace, getLogger
-from . import BackendBase
+""" Module containing the backend implementation for consul """
+
+import re
+import urllib.parse
 
 import consul
 
-from re import sub as resub
-from urllib.parse import urlparse as up
-
+from rancon.tools import tag_replace, getLogger
+from . import BackendBase
 
 class ConsulBackend(BackendBase):
+    """ Implementation of consul backend """
 
     required_opts = ('url',)
     additional_opts = ('id_schema', 'cleanup_id')
@@ -16,17 +18,21 @@ class ConsulBackend(BackendBase):
                  id_schema='%NAME%_%HOST%_%PORT%',
                  cleanup_id='default'):
         self.log = getLogger(__name__)
-        parsed_url = up(url)
-        items = parsed_url.netloc.split(":")
-        # can be a list.
+
         self.id_schema = id_schema
         self.cleanup_id = cleanup_id.lower()
-        if len(items) == 1:
-            self.consul = consul.Consul(host=parsed_url.netloc,
+
+        parsed_url = urllib.parse.urlparse(url)
+
+        # port specified?
+        if ":" in parsed_url.netloc:
+            host, port = parsed_url.netloc.split(":")
+            self.consul = consul.Consul(host=host, port=port,
                                         scheme=parsed_url.scheme)
         else:
-            self.consul = consul.Consul(host=items[0], port=items[1],
+            self.consul = consul.Consul(host=parsed_url.netloc,
                                         scheme=parsed_url.scheme)
+
         self.log.error("INIT: url={}".format(url))
         self.log.error("INIT: id_schema={}".format(self.id_schema))
         self.log.error("INIT: cleanup_id={}".format(self.cleanup_id))
@@ -75,8 +81,9 @@ class ConsulBackend(BackendBase):
 
     def _get_service_id(self, service):
         tmp = tag_replace(self.id_schema, service).lower()
-        return resub(r"[^a-z0-9-]", "-", tmp)
+        return re.sub(r"[^a-z0-9-]", "-", tmp)
 
 
 def get():
+    """ returns this model's main class """
     return ConsulBackend
