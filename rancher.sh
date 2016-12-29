@@ -11,7 +11,7 @@ if [ ! -z "$CATTLE_URL" ]; then
     ENV_NAME=$(curl http://rancher-metadata/latest/self/stack/environment_name 2>/dev/null)
     if [ "$?" == "0" ]; then
         echo "STARTUP: Found environment '$ENV_NAME'"
-        ADD_PARAMS=" $ADD_PARAMS -b cleanup_id=$ENV_NAME"
+        ADD_PARAMS=" $ADD_PARAMS -b cleanup_id='$ENV_NAME'"
     fi
 fi
 
