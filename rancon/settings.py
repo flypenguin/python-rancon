@@ -83,6 +83,11 @@ def parse_params(sys_argv):
                              "used. Default: $RANCON_WAIT or 5",
                         type=int,
                         default=int(environ.get("RANCON_WAIT", "5")))
+    parser.add_argument("-d", "--hangup-detection",
+                        help="How many seconds to wait before considering service to be hanging. "
+                             "Default: $RANCON_HANGUP_SECONDS or 30",
+                        type=int,
+                        default=int(environ.get("RANCON_HANGUP_SECONDS", "30")))
     parser.add_argument("-q", "--quiet",
                         help="Decreases verbosity level, use multiple times to "
                              "decrease further. Do not combine with -v. "

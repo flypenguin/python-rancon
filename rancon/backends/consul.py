@@ -3,7 +3,10 @@
 import re
 import urllib.parse
 
+from time import ctime
+
 import consul
+import prometheus_client.core
 
 from rancon.tools import tag_replace, getLogger
 from . import BackendBase
@@ -36,17 +39,22 @@ class ConsulBackend(BackendBase):
         self.log.error("INIT: url={}".format(url))
         self.log.error("INIT: id_schema={}".format(self.id_schema))
         self.log.error("INIT: cleanup_id={}".format(self.cleanup_id))
+        self.register_service_summary = prometheus_client.core.Summary('register_service_seconds', 'Number of seconds register_service takes', ())
 
     def register(self, service):
+        start = ctime()
         # lower everything, consul should not have upper/lower case distinction
         svc_id = self._get_service_id(service)
         svc_name = service.name.lower()
+
         success = self.consul.agent.service.register(
             svc_name,
             svc_id,
             address=service.host, port=int(service.port),
             tags=self._get_tags(service),
         )
+        self.register_service_summary.observe(ctime() - start)
+
         if success:
             self.log.warn("REGISTER: {} using {} / {} (cleanup id: {})"
                           .format(service, svc_name, svc_id,

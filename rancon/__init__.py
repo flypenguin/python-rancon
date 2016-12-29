@@ -11,18 +11,78 @@ Please look through the documentation to make more sense of this, it is easy
 but just a little bit complex because of the flexibility.
 """
 
+import asyncio
 import sys
 from time import sleep, ctime
 
 from rancon import settings
 from rancon import tools
 
+import uvloop
 
-def route_services():
-    """ checks for services to register and then  """
+import prometheus_client.exposition
+import prometheus_client.core
+
+from prometheus_client import Counter, Gauge, Histogram, Summary
+
+import sanic
+from sanic import Sanic
+from sanic.response import json
+
+
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+app = Sanic()
+
+
+@app.route("/metrics")
+async def metrics(request):
+    """ returns the latest metrics """
+    names = request.args.getlist("name")
+    registry = prometheus_client.core.REGISTRY
+    if names:
+        registry = registry.restricted_registry(names)
+    return prometheus_client.exposition.generate_latest(registry)
+
+
+@app.route("/health")
+async def health(request):
+    """ returns the current health state of the system """
+    duration = ctime() - LAST_CALL_ROUTE_SERVICES
+
+    if duration > settings.args.hangup_detection:
+        raise sanic.exceptions.ServerError("system hang-up detected, it's been {} seconds since start of route_services".format(duration))
+    return "OK"
+
+
+LAST_CALL_ROUTE_SERVICES = ctime()
+
+# NB: documentation does not fit the implementation here. the parameters here should be
+# name, labelnames, labelvalues but documented are name, description, so I'm not sure
+# what to use here. Also, it's not clear what labelnames and labelvalues should be if they
+# were used and how they could be retrieved.
+ROUTE_TIME = Summary('route_services_seconds', 'Number of seconds route_services takes', ())
+
+@ROUTE_TIME.time()
+def route_services(schedule_next=5, loop=None):
+    """ checks for services to register and then register them with consul """
+    if loop is not None:
+        loop.call_later(schedule_next, route_services, schedule_next, loop)
+    global LAST_CALL_ROUTE_SERVICES
+    LAST_CALL_ROUTE_SERVICES = ctime()
+
     log = tools.getLogger(__name__)
     backend = settings.backend
     source = settings.source
+
+    # to do:
+
+    # this could be made asynchronous by having futures for get_services and register_service (or by using co-routines)
+    # then we could use time-outs to abort these calls if they are taking to long.
+
+    # Questions:
+
+    # - what's happening right now? a hanging rancon should not disturb the status quo it should just not add anything new.
+
     services_to_route = source.get_services()
     registered_services = []
 
@@ -49,12 +109,17 @@ def start(sys_argv):
     log = tools.getLogger(__name__)
     # run
     log.error("Start @ {}".format(ctime()))
-    route_services()
-    while settings.args.continuous:
-        sleep(settings.args.wait)
+
+    if not settings.args.continuous:
         route_services()
+        sys.exit(0)
+
+    loop = asyncio.get_event_loop()
+    loop.call_soon(route_services, settings.args.wait, loop)
+    app.run(host="0.0.0.0", port=8000, loop=loop)
     log.info("Exiting.")
 
 
 def console_entrypoint():
     start(sys.argv[1:])
+

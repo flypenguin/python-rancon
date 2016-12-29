@@ -1,4 +1,7 @@
 """ source definition for rancher source """
+import prometheus_client.core
+from time import ctime
+
 from cattleprod import poke
 from dotmap import DotMap
 
@@ -26,6 +29,7 @@ class RancherSource(SourceBase):
         self.secretkey = secretkey
         self.default_name_scheme = default_name_scheme
         self.cache = DotMap()
+        self.get_services_summary = prometheus_client.core.Summary('get_services_seconds', 'Number of seconds get_services takes', ())
 
     def is_rancon(self, service):
         """ Checks if service has a rancon label """
@@ -41,6 +45,7 @@ class RancherSource(SourceBase):
         return False
 
     def get_services(self, **_):
+        start = ctime()
         starting_point = self._poke(self.url)
         routable_services = []
 
@@ -72,6 +77,7 @@ class RancherSource(SourceBase):
         # return service instances
         self.log.info("EVAL: found {} routable services".format(
             len(routable_services)))
+        self.get_services_summary.observe(ctime() - start)
         return routable_services
 
     def _get_name_for(self, url):
