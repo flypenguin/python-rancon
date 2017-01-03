@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+0.10.0
+-----
+
+Date: 2017-01-03
+
+- FEATURE: Add "web interface" (basically only for metrics and health check)
+- FEATURE: Add health check under /health
+- FEATURE: Add prometheus metrics under /metrics
+- CHANGE: Deregistration behavior for services which failed registration (was:
+  unregister, is now: keep)
+
+
 0.9.0
 -----
 
