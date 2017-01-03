@@ -1,8 +1,16 @@
 CHANGELOG
 =========
 
+0.11.0
+------
+
+Date: 2017-01-03
+
+- FIX: Service tag replacment exception
+
+
 0.10.0
------
+------
 
 Date: 2017-01-03
 
