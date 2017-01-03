@@ -34,6 +34,12 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 app = Sanic()
 
 
+@app.route("/")
+async def index(request):
+    """ returns a hello string """
+    return text("rancon :)")
+
+
 @app.route("/metrics")
 async def metrics(request):
     """ returns the latest metrics """
