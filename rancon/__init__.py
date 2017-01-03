@@ -54,7 +54,9 @@ async def health(request):
     duration = time.time() - LAST_CALL_ROUTE_SERVICES
 
     if duration > settings.args.hangup_detection:
-        raise sanic.exceptions.ServerError("system hang-up detected, it's been {} seconds since start of route_services".format(duration))
+        msg = "system hang-up detected, it's been {} seconds since start of "\
+              "route_services".format(int(duration))
+        raise sanic.exceptions.ServerError(msg)
     return text("OK")
 
 
