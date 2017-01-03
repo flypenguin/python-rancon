@@ -10,6 +10,7 @@ import prometheus_client.core
 from rancon.tools import tag_replace, getLogger
 from . import BackendBase
 
+
 class ConsulBackend(BackendBase):
     """ Implementation of consul backend """
 
