@@ -81,29 +81,21 @@ def route_services(schedule_next=5, loop=None):
     source = settings.source
 
     # to do:
-
     # this could be made asynchronous by having futures for get_services and register_service (or by using co-routines)
     # then we could use time-outs to abort these calls if they are taking to long.
-
-    # Questions:
-
-    # - what's happening right now? a hanging rancon should not disturb the status quo it should just not add anything new.
 
     services_to_route = source.get_services()
     registered_services = []
 
     for service in services_to_route:
-        routed_service = backend.register(service)
-        if routed_service is None:
-            log.warn("Failed to register service: {}".format(service))
-        else:
-            registered_services.append(routed_service)
+        success, routed_service = backend.register(service)
+        registered_services.append(routed_service)
 
     if len(registered_services) == 0:
-        log.warn("No services registered (of {} services found)"
-                 .format(len(services_to_route)))
+        log.debug("No services registered (of {} services found)"
+                  .format(len(services_to_route)))
     backend.cleanup(registered_services)
-    log.warn("Run completed @ {}".format(time.ctime()))
+    log.debug("Run completed @ {}".format(time.ctime()))
 
 
 def start(sys_argv):

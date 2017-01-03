@@ -41,6 +41,9 @@ class ConsulBackend(BackendBase):
         self.register_service_summary = prometheus_client.core.Summary('register_service_seconds', 'Number of seconds register_service takes', ())
 
     def register(self, service):
+        """Register the service in consul.
+        :return: (BOOL(success), STR(svc_id))
+        """
         start = time.time()
         # lower everything, consul should not have upper/lower case distinction
         svc_id = self._get_service_id(service)
@@ -55,15 +58,14 @@ class ConsulBackend(BackendBase):
         self.register_service_summary.observe(time.time() - start)
 
         if success:
-            self.log.warn("REGISTER: {} using {} / {} (cleanup id: {})"
+            self.log.info("REGISTER: {} using {} / {} (cleanup id: {})"
                           .format(service, svc_name, svc_id,
                                   self._get_cleanup_tag()))
-            return svc_id
         else:
             self.log.warn("REGISTER: FAILED registering "
                           "service {} using {} / {}"
                           .format(service, svc_name, svc_id))
-            return None
+        return success, svc_id
 
     def cleanup(self, keep_services):
         con = self.consul
