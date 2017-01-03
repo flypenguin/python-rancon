@@ -1,8 +1,9 @@
+""" sets up the base class for all backend services """
 from rancon.common import CommonBase
 
 
 class BackendBase(CommonBase):
-
+    """ base class for all implementations of a backend """
     required_opts = ()
     additional_opts = ()
 

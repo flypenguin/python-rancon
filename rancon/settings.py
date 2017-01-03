@@ -79,10 +79,15 @@ def parse_params(sys_argv):
                         action='store_true',
                         default=bool(environ.get("RANCON_FOREGROUND", False)))
     parser.add_argument("-w", "--wait",
-                        help="How many seconds to wait between runs if -f is "
+                        help="How many seconds to wait between runs if -c is "
                              "used. Default: $RANCON_WAIT or 5",
                         type=int,
                         default=int(environ.get("RANCON_WAIT", "5")))
+    parser.add_argument("-d", "--hangup-detection",
+                        help="How many seconds to wait before considering service to be hanging. "
+                             "Default: $RANCON_HANGUP_SECONDS or 30",
+                        type=int,
+                        default=int(environ.get("RANCON_HANGUP_SECONDS", "30")))
     parser.add_argument("-q", "--quiet",
                         help="Decreases verbosity level, use multiple times to "
                              "decrease further. Do not combine with -v. "
@@ -116,26 +121,27 @@ def parse_params(sys_argv):
 
     # check required SOURCE and REGISTRY settings
     classes = []
-    for a in (("source", args.source, "-s", args.source_options),
-              ("backend", args.backend, "-b", args.backend_options)):
+
+    dyna_load = (("source", args.source, "-s", args.source_options),
+                 ("backend", args.backend, "-b", args.backend_options))
+
+    for mod in dyna_load:
         try:
-            i = il.import_module("rancon.{}s.{}".format(a[0], a[1]))
+            i = il.import_module("rancon.{}s.{}".format(mod[0], mod[1]))
             got_class = i.get()
             for ropt in got_class.required_opts:
-                if ropt not in a[3]:
-                    errors.append("Missing option for {} '{}': {} {}=..."
-                                  .format(a[0], a[1], a[2], ropt))
-            for opt in a[3].keys():
-                if not (opt in got_class.required_opts or
-                                opt in got_class.additional_opts):
-                    errors.append("Unkonwn option for {} '{}': {}"
-                                  .format(a[0], a[1], opt))
+                if ropt not in mod[3]:
+                    errors.append("Missing option for {} '{}': {} {}=...".format(
+                        mod[0], mod[1], mod[2], ropt))
+            for opt in mod[3].keys():
+                if not (opt in got_class.required_opts or opt in got_class.additional_opts):
+                    errors.append("Unknown option for {} '{}': {}".format(mod[0], mod[1], opt))
 
         except ImportError:
-                errors.append("Invalid {} type: {}".format(a[0], a[1]))
+            errors.append("Invalid {} type: {}".format(mod[0], mod[1]))
 
         if len(errors) == 0:
-            classes.append(got_class(**a[3]))
+            classes.append(got_class(**mod[3]))
 
     if errors:
         fail(errors)

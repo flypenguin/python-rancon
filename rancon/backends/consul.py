@@ -1,13 +1,18 @@
+""" Module containing the backend implementation for consul """
+
+import re
+import urllib.parse
+import time
+
+import consul
+import prometheus_client.core
+
 from rancon.tools import tag_replace, getLogger
 from . import BackendBase
 
-import consul
-
-from re import sub as resub
-from urllib.parse import urlparse as up
-
 
 class ConsulBackend(BackendBase):
+    """ Implementation of consul backend """
 
     required_opts = ('url',)
     additional_opts = ('id_schema', 'cleanup_id')
@@ -16,41 +21,52 @@ class ConsulBackend(BackendBase):
                  id_schema='%NAME%_%HOST%_%PORT%',
                  cleanup_id='default'):
         self.log = getLogger(__name__)
-        parsed_url = up(url)
-        items = parsed_url.netloc.split(":")
-        # can be a list.
+
         self.id_schema = id_schema
         self.cleanup_id = cleanup_id.lower()
-        if len(items) == 1:
-            self.consul = consul.Consul(host=parsed_url.netloc,
+
+        parsed_url = urllib.parse.urlparse(url)
+
+        # port specified?
+        if ":" in parsed_url.netloc:
+            host, port = parsed_url.netloc.split(":")
+            self.consul = consul.Consul(host=host, port=port,
                                         scheme=parsed_url.scheme)
         else:
-            self.consul = consul.Consul(host=items[0], port=items[1],
+            self.consul = consul.Consul(host=parsed_url.netloc,
                                         scheme=parsed_url.scheme)
+
         self.log.error("INIT: url={}".format(url))
         self.log.error("INIT: id_schema={}".format(self.id_schema))
         self.log.error("INIT: cleanup_id={}".format(self.cleanup_id))
+        self.register_service_summary = prometheus_client.core.Summary('register_service_seconds', 'Number of seconds register_service takes', ())
 
     def register(self, service):
+        """Register the service in consul.
+        :return: (BOOL(success), STR(svc_id))
+        """
+        start = time.time()
         # lower everything, consul should not have upper/lower case distinction
         svc_id = self._get_service_id(service)
         svc_name = service.name.lower()
+
         success = self.consul.agent.service.register(
             svc_name,
             svc_id,
             address=service.host, port=int(service.port),
             tags=self._get_tags(service),
         )
+        self.register_service_summary.observe(time.time() - start)
+
         if success:
-            self.log.warn("REGISTER: {} using {} / {} (cleanup id: {})"
+            self.log.info("REGISTER: {} using {} / {} (cleanup id: {})"
                           .format(service, svc_name, svc_id,
                                   self._get_cleanup_tag()))
-            return svc_id
         else:
             self.log.warn("REGISTER: FAILED registering "
                           "service {} using {} / {}"
                           .format(service, svc_name, svc_id))
-            return None
+        return success, svc_id
 
     def cleanup(self, keep_services):
         con = self.consul
@@ -75,8 +91,9 @@ class ConsulBackend(BackendBase):
 
     def _get_service_id(self, service):
         tmp = tag_replace(self.id_schema, service).lower()
-        return resub(r"[^a-z0-9-]", "-", tmp)
+        return re.sub(r"[^a-z0-9-]", "-", tmp)
 
 
 def get():
+    """ returns this model's main class """
     return ConsulBackend

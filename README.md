@@ -11,7 +11,7 @@ Documentation is pretty incomplete, but might be self-explanatory if called.
 
 - clone rancon
 - add a service in rancher
-    - assign a label `rancon` with any value
+- assign a label `rancon` with any value
 - start rancon `python -m rancon rancher consul -s url=rancherurl -b url=consulurl`
 - look at the output, and in consul
 - upgrade the service, and change the labels to ``rancon.name=supercool``.

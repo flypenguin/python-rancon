@@ -1,14 +1,18 @@
+""" some tools """
+
+import logging
+import re
+import sys
+
 from rancon import settings
 
-import sys
-from re import compile
-from logging import getLogger as loggingGetLogger
-
-
-tag_matcher = compile("%([A-Z0-9]+)%")
+tag_matcher = re.compile("%([A-Z0-9]+)%")
 
 
 def fail(message):
+    """ logs message before calling sys.exit
+        XXX: why is this using print not log?
+    """
     if isinstance(message, list) or isinstance(message, tuple):
         if len(message) > 1:
             message = "\n  - " + "\n  - ".join(message)
@@ -21,10 +25,11 @@ def fail(message):
 
 
 def is_true(something):
+    """ checks if something is truthy.
+        for strings this is supposed to be one (lowercased) of "true", "1", "yes", "on"
+    """
     if isinstance(something, str):
         return something.lower() in ("true", "1", "yes", "on")
-    elif isinstance(something, int):
-        return something != 0
     else:
         return bool(something)
 
@@ -45,6 +50,9 @@ def tag_replace(line, replacement_dict, default="UNDEFINED"):
 
 
 def getLogger(*args, **kwargs):
-    logger = loggingGetLogger(*args, **kwargs)
+    """ returns a logger
+        XXX: why not define this in settings?
+    """
+    logger = logging.getLogger(*args, **kwargs)
     logger.setLevel(settings.loglevel)
     return logger

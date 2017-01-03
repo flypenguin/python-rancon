@@ -1,13 +1,16 @@
-from . import SourceBase
-from rancon.service import Service
+""" source definition for rancher source """
+import time
 
+import prometheus_client.core
 from cattleprod import poke
 from dotmap import DotMap
 
+from rancon.service import Service
 from rancon.tools import getLogger
-
+from . import SourceBase
 
 class RancherSource(SourceBase):
+    """ describes a source for rancher """
 
     required_opts = ('url',)
     additional_opts = ('accesskey', 'secretkey', 'default_name_scheme')
@@ -26,29 +29,34 @@ class RancherSource(SourceBase):
         self.secretkey = secretkey
         self.default_name_scheme = default_name_scheme
         self.cache = DotMap()
+        self.get_services_summary = prometheus_client.core.Summary('get_services_seconds', 'Number of seconds get_services takes', ())
+
+    def is_rancon(self, service):
+        """ Checks if service has a rancon label """
+        labels = service.launchConfig.labels
+        self.log.debug("EVAL: service '{}' (labels: '{}'".format(
+            service.name, ",".join(labels.keys())))
+        for label in labels:
+            if label == 'rancon' or label.startswith("rancon."):
+                self.log.info("EVAL: found matching service '{}' "
+                              "by label '{}'"
+                              .format(service.name, label))
+                return True
+        return False
 
     def get_services(self, **_):
+        start = time.time()
         starting_point = self._poke(self.url)
-        rv = []
-        services = []
+        routable_services = []
+
         # get all services with rancon(\..+) labels
-        for service in starting_point.get_services():
-            labels = service.launchConfig.labels
-            self.log.debug("EVAL: service '{}' (labels: '{}'"
-                           .format(service.name, ",".join(labels.keys())))
-            for label in labels:
-                if label == 'rancon' or label.startswith("rancon."):
-                    self.log.info("EVAL: found matching service '{}' "
-                                   "by label '{}'"
-                                   .format(service.name, label))
-                    services.append(service)
-                    break
-            else:
-                continue
+        services = [spoint for spoint in starting_point.get_services() if self.is_rancon(spoint)]
+
         # create service instances
         self.log.debug("EVAL: found {} potential services by tag, "
                        "checking for endpoints"
                        .format(len(services)))
+
         for service in services:
             endpoints = service.publicEndpoints or []
             labels = service.launchConfig.labels
@@ -64,10 +72,13 @@ class RancherSource(SourceBase):
                 if 'name' not in meta:
                     meta['name'] = service.name
                 svc = Service(source=service, **meta)
-                rv.append(svc)
+                routable_services.append(svc)
+
         # return service instances
-        self.log.info("EVAL: found {} routable services".format(len(rv)))
-        return rv
+        self.log.info("EVAL: found {} routable services".format(
+            len(routable_services)))
+        self.get_services_summary.observe(time.time() - start)
+        return routable_services
 
     def _get_name_for(self, url):
         if not self.cache[url]:
@@ -88,4 +99,5 @@ class RancherSource(SourceBase):
 
 
 def get():
+    """ returns this modules class """
     return RancherSource

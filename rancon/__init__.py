@@ -11,31 +11,110 @@ Please look through the documentation to make more sense of this, it is easy
 but just a little bit complex because of the flexibility.
 """
 
+import asyncio
+import sys
+import time
+
 from rancon import settings
 from rancon import tools
 
-import sys
-from time import sleep, ctime
+import uvloop
+import prometheus_client.exposition
+import prometheus_client.core
+from prometheus_client import Counter, Gauge, Histogram, Summary
+import sanic
+from sanic import Sanic
+from sanic.response import HTTPResponse, text
 
 
-def route_services():
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+app = Sanic()
+
+
+@app.route("/")
+async def index(request):
+    """ returns a hello string """
+    return text("rancon :)")
+
+
+@app.route("/metrics")
+async def metrics(request):
+    """ returns the latest metrics """
+    names = request.args.get("name", None)
+    registry = prometheus_client.core.REGISTRY
+    if names:
+        registry = registry.restricted_registry(names)
+    tmp = prometheus_client.exposition.generate_latest(registry)
+    return HTTPResponse(body_bytes=tmp)
+
+
+@app.route("/health")
+async def health(request):
+    """ returns the current health state of the system """
+    duration = time.time() - LAST_CALL_ROUTE_SERVICES
+
+    if duration > settings.args.hangup_detection:
+        msg = "system hang-up detected, it's been {} seconds since start of "\
+              "route_services".format(int(duration))
+        raise sanic.exceptions.ServerError(msg)
+    return text("OK")
+
+
+LAST_CALL_ROUTE_SERVICES = time.time()
+
+# NB: documentation does not fit the implementation here. the parameters here should be
+# name, labelnames, labelvalues but documented are name, description, so I'm not sure
+# what to use here. Also, it's not clear what labelnames and labelvalues should be if they
+# were used and how they could be retrieved.
+ROUTE_TIME = Summary('rancon_route_services_seconds',
+                     'Number of seconds route_services takes')
+
+METRIC_SERVICES_FOUND = Gauge('rancon_discovered_services',
+                              'Number of discovered services')
+
+METRIC_SUCCESSFUL_REGS = Counter('rancon_successful_registrations',
+                                 'Number of services registered')
+
+METRIC_FAILED_REGS = Counter('rancon_failed_registrations',
+                             'Number of failed service registrations')
+
+METRIC_SUCCESSFUL_DEREGS = Counter('rancon_successful_deregistrations',
+                                   'Number of services deregistered, UNUSED')
+
+METRIC_FAILED_DEREGS = Counter('rancon_failed_deregistrations',
+                               'Number of failed service deregistrations, '
+                               'UNUSED')
+
+
+@ROUTE_TIME.time()
+def route_services(schedule_next=5, loop=None):
+    """ checks for services to register and then register them with consul """
+    if loop is not None:
+        loop.call_later(schedule_next, route_services, schedule_next, loop)
+    global LAST_CALL_ROUTE_SERVICES
+    LAST_CALL_ROUTE_SERVICES = time.time()
+
     log = tools.getLogger(__name__)
     backend = settings.backend
     source = settings.source
-    routed_services = source.get_services()
+
+    services_to_route = source.get_services()
     registered_services = []
-    for service in routed_services:
-        rv = backend.register(service)
-        if rv:
-            registered_services.append(rv)
+
+    METRIC_SERVICES_FOUND.set(len(services_to_route))
+    for service in services_to_route:
+        success, routed_service = backend.register(service)
+        registered_services.append(routed_service)
+        if success:
+            METRIC_SUCCESSFUL_REGS.inc()
         else:
-            log.warn("Failed to register service: {}"
-                     .format(service))
+            METRIC_FAILED_REGS.inc()
+
     if len(registered_services) == 0:
-        log.warn("No services registered (of {} services found)"
-                 .format(len(registered_services), len(routed_services)))
+        log.debug("No services registered (of {} services found)"
+                  .format(len(services_to_route)))
     backend.cleanup(registered_services)
-    log.warn("Run completed @ {}".format(ctime()))
+    log.debug("Run completed @ {}".format(time.ctime()))
 
 
 def start(sys_argv):
@@ -44,13 +123,18 @@ def start(sys_argv):
     # not before here :)
     log = tools.getLogger(__name__)
     # run
-    log.error("Start @ {}".format(ctime()))
-    route_services()
-    while settings.args.continuous:
-        sleep(settings.args.wait)
+    log.error("Start @ {}".format(time.ctime()))
+
+    if not settings.args.continuous:
         route_services()
+        sys.exit(0)
+
+    loop = asyncio.get_event_loop()
+    loop.call_soon(route_services, settings.args.wait, loop)
+    app.run(host="0.0.0.0", port=8000, loop=loop)
     log.info("Exiting.")
 
 
 def console_entrypoint():
     start(sys.argv[1:])
+
