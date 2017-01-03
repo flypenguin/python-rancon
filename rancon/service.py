@@ -20,7 +20,10 @@ class Service(DotMap):
         # replace all tags in all values
         for key, value in self.items():
             if isinstance(value, str):
-                self[key] = re.sub("%([^%]+)%", lambda x: self[x.group(1)], value)
+                self[key] = re.sub("%([^%]+)%",
+                                   lambda x: self.get(x.group(1).lower(),
+                                                      "UNDEFINED"),
+                                   value)
 
     def __str__(self):
         return "{} ({}:{})".format(
