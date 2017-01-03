@@ -66,7 +66,25 @@ LAST_CALL_ROUTE_SERVICES = time.time()
 # name, labelnames, labelvalues but documented are name, description, so I'm not sure
 # what to use here. Also, it's not clear what labelnames and labelvalues should be if they
 # were used and how they could be retrieved.
-ROUTE_TIME = Summary('route_services_seconds', 'Number of seconds route_services takes', ())
+ROUTE_TIME = Summary('rancon_route_services_seconds',
+                     'Number of seconds route_services takes')
+
+METRIC_SERVICES_FOUND = Gauge('rancon_discovered_services',
+                              'Number of discovered services')
+
+METRIC_SUCCESSFUL_REGS = Counter('rancon_successful_registrations',
+                                 'Number of services registered')
+
+METRIC_FAILED_REGS = Counter('rancon_failed_registrations',
+                             'Number of failed service registrations')
+
+METRIC_SUCCESSFUL_DEREGS = Counter('rancon_successful_deregistrations',
+                                   'Number of services deregistered, UNUSED')
+
+METRIC_FAILED_DEREGS = Counter('rancon_failed_deregistrations',
+                               'Number of failed service deregistrations, '
+                               'UNUSED')
+
 
 @ROUTE_TIME.time()
 def route_services(schedule_next=5, loop=None):
@@ -80,16 +98,17 @@ def route_services(schedule_next=5, loop=None):
     backend = settings.backend
     source = settings.source
 
-    # to do:
-    # this could be made asynchronous by having futures for get_services and register_service (or by using co-routines)
-    # then we could use time-outs to abort these calls if they are taking to long.
-
     services_to_route = source.get_services()
     registered_services = []
 
+    METRIC_SERVICES_FOUND.set(len(services_to_route))
     for service in services_to_route:
         success, routed_service = backend.register(service)
         registered_services.append(routed_service)
+        if success:
+            METRIC_SUCCESSFUL_REGS.inc()
+        else:
+            METRIC_FAILED_REGS.inc()
 
     if len(registered_services) == 0:
         log.debug("No services registered (of {} services found)"
