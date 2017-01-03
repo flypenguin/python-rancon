@@ -50,7 +50,7 @@ class RancherSource(SourceBase):
         routable_services = []
 
         # get all services with rancon(\..+) labels
-        services = [spoint for spoint in starting_point.get_services if self.is_rancon(spoint)]
+        services = [spoint for spoint in starting_point.get_services() if self.is_rancon(spoint)]
 
         # create service instances
         self.log.debug("EVAL: found {} potential services by tag, "
