@@ -25,7 +25,7 @@ def route_services():
     routed_services = source.get_services()
     registered_services = []
     for service in routed_services:
-        rv = backend.register(service)
+        rv = backend.configure(service)
         if rv:
             registered_services.append(rv)
         else:

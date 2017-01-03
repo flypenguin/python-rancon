@@ -6,10 +6,10 @@ class BackendBase(CommonBase):
     required_opts = ()
     additional_opts = ()
 
-    def register(self, service):
+    def configure(self, services):
         """
         Registers a service in the backend.
-        :param service: A rancon.service.Service instance
+        :param services: A rancon.service.Service instance
         :return: None
         """
         pass
