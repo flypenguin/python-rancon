@@ -27,7 +27,7 @@ from prometheus_client import Counter, Gauge, Histogram, Summary
 
 import sanic
 from sanic import Sanic
-from sanic.response import json
+from sanic.response import HTTPResponse, text
 
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -37,11 +37,12 @@ app = Sanic()
 @app.route("/metrics")
 async def metrics(request):
     """ returns the latest metrics """
-    names = request.args.getlist("name")
+    names = request.args.get("name", None)
     registry = prometheus_client.core.REGISTRY
     if names:
         registry = registry.restricted_registry(names)
-    return prometheus_client.exposition.generate_latest(registry)
+    tmp = prometheus_client.exposition.generate_latest(registry)
+    return HTTPResponse(body_bytes=tmp)
 
 
 @app.route("/health")
@@ -51,7 +52,7 @@ async def health(request):
 
     if duration > settings.args.hangup_detection:
         raise sanic.exceptions.ServerError("system hang-up detected, it's been {} seconds since start of route_services".format(duration))
-    return "OK"
+    return text("OK")
 
 
 LAST_CALL_ROUTE_SERVICES = time.time()
