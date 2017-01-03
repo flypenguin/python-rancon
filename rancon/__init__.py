@@ -19,12 +19,9 @@ from rancon import settings
 from rancon import tools
 
 import uvloop
-
 import prometheus_client.exposition
 import prometheus_client.core
-
 from prometheus_client import Counter, Gauge, Histogram, Summary
-
 import sanic
 from sanic import Sanic
 from sanic.response import HTTPResponse, text
