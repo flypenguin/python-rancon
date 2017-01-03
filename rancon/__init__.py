@@ -101,10 +101,8 @@ def route_services(schedule_next=5, loop=None):
             registered_services.append(routed_service)
 
     if len(registered_services) == 0:
-        # To ABK: got rid of the warning [only one format {} was defined]
-        # but don't know what you wanted to do here.
-        log.warn("No services registered (of {} + {} services found)"
-                 .format(len(registered_services), len(services_to_route)))
+        log.warn("No services registered (of {} services found)"
+                 .format(len(services_to_route)))
     backend.cleanup(registered_services)
     log.warn("Run completed @ {}".format(time.ctime()))
 
