@@ -4,6 +4,7 @@ import re
 
 from dotmap import DotMap
 
+
 class Service(DotMap):
     """ class representing a service """
 
