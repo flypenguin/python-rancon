@@ -36,10 +36,10 @@ class ConsulBackend(BackendBase):
             self.consul = consul.Consul(host=parsed_url.netloc,
                                         scheme=parsed_url.scheme)
 
-        self.log.error("INIT: url={}".format(url))
-        self.log.error("INIT: id_schema={}".format(self.id_schema))
-        self.log.error("INIT: cleanup_id={}".format(self.cleanup_id))
-        self.register_service_summary = prometheus_client.core.Summary('register_service_seconds', 'Number of seconds register_service takes', ())
+        self.log.info("CONSUL INIT: url={}".format(url))
+        self.log.info("CONSUL INIT: id_schema={}".format(self.id_schema))
+        self.log.info("CONSUL INIT: cleanup_id={}".format(self.cleanup_id))
+        self.register_service_summary = prometheus_client.core.Summary('rancon_register_service_seconds', 'Number of seconds register_service takes')
 
     def register(self, service):
         """Register the service in consul.

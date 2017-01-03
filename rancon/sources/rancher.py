@@ -18,11 +18,11 @@ class RancherSource(SourceBase):
     def __init__(self, url, accesskey=None, secretkey=None,
                  default_name_scheme='%NAME%'):
         self.log = getLogger(__name__)
-        self.log.error("INIT: url={}".format(url))
-        self.log.error("INIT: accesskey={}".format(str(accesskey)))
-        self.log.error("INIT: secretkey={}".format('<SET>' if secretkey
+        self.log.info("RANCHER INIT: url={}".format(url))
+        self.log.info("RANCHER INIT: accesskey={}".format(str(accesskey)))
+        self.log.info("RANCHER INIT: secretkey={}".format('<SET>' if secretkey
                                                    else None))
-        self.log.error("INIT: default_name_scheme={}".format(
+        self.log.info("RANCHER INIT: default_name_scheme={}".format(
             default_name_scheme))
         self.url = url
         self.accesskey = accesskey
