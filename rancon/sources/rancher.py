@@ -1,7 +1,7 @@
 """ source definition for rancher source """
-import prometheus_client.core
-from time import ctime
+import time
 
+import prometheus_client.core
 from cattleprod import poke
 from dotmap import DotMap
 
@@ -45,7 +45,7 @@ class RancherSource(SourceBase):
         return False
 
     def get_services(self, **_):
-        start = ctime()
+        start = time.time()
         starting_point = self._poke(self.url)
         routable_services = []
 
@@ -77,7 +77,7 @@ class RancherSource(SourceBase):
         # return service instances
         self.log.info("EVAL: found {} routable services".format(
             len(routable_services)))
-        self.get_services_summary.observe(ctime() - start)
+        self.get_services_summary.observe(time.time() - start)
         return routable_services
 
     def _get_name_for(self, url):

@@ -13,7 +13,7 @@ but just a little bit complex because of the flexibility.
 
 import asyncio
 import sys
-from time import sleep, ctime
+import time
 
 from rancon import settings
 from rancon import tools
@@ -47,14 +47,14 @@ async def metrics(request):
 @app.route("/health")
 async def health(request):
     """ returns the current health state of the system """
-    duration = ctime() - LAST_CALL_ROUTE_SERVICES
+    duration = time.time() - LAST_CALL_ROUTE_SERVICES
 
     if duration > settings.args.hangup_detection:
         raise sanic.exceptions.ServerError("system hang-up detected, it's been {} seconds since start of route_services".format(duration))
     return "OK"
 
 
-LAST_CALL_ROUTE_SERVICES = ctime()
+LAST_CALL_ROUTE_SERVICES = time.time()
 
 # NB: documentation does not fit the implementation here. the parameters here should be
 # name, labelnames, labelvalues but documented are name, description, so I'm not sure
@@ -68,7 +68,7 @@ def route_services(schedule_next=5, loop=None):
     if loop is not None:
         loop.call_later(schedule_next, route_services, schedule_next, loop)
     global LAST_CALL_ROUTE_SERVICES
-    LAST_CALL_ROUTE_SERVICES = ctime()
+    LAST_CALL_ROUTE_SERVICES = time.time()
 
     log = tools.getLogger(__name__)
     backend = settings.backend
@@ -99,7 +99,7 @@ def route_services(schedule_next=5, loop=None):
         log.warn("No services registered (of {} + {} services found)"
                  .format(len(registered_services), len(services_to_route)))
     backend.cleanup(registered_services)
-    log.warn("Run completed @ {}".format(ctime()))
+    log.warn("Run completed @ {}".format(time.ctime()))
 
 
 def start(sys_argv):
@@ -108,7 +108,7 @@ def start(sys_argv):
     # not before here :)
     log = tools.getLogger(__name__)
     # run
-    log.error("Start @ {}".format(ctime()))
+    log.error("Start @ {}".format(time.ctime()))
 
     if not settings.args.continuous:
         route_services()

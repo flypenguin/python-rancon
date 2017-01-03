@@ -2,8 +2,7 @@
 
 import re
 import urllib.parse
-
-from time import ctime
+import time
 
 import consul
 import prometheus_client.core
@@ -42,7 +41,7 @@ class ConsulBackend(BackendBase):
         self.register_service_summary = prometheus_client.core.Summary('register_service_seconds', 'Number of seconds register_service takes', ())
 
     def register(self, service):
-        start = ctime()
+        start = time.time()
         # lower everything, consul should not have upper/lower case distinction
         svc_id = self._get_service_id(service)
         svc_name = service.name.lower()
@@ -53,7 +52,7 @@ class ConsulBackend(BackendBase):
             address=service.host, port=int(service.port),
             tags=self._get_tags(service),
         )
-        self.register_service_summary.observe(ctime() - start)
+        self.register_service_summary.observe(time.time() - start)
 
         if success:
             self.log.warn("REGISTER: {} using {} / {} (cleanup id: {})"
