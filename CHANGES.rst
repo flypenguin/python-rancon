@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+0.11.1
+------
+
+Date: 2017-01-04
+
+- FIX: rancher.sh startup script processes env names with spaces now
+
+
 0.11.0
 ------
 
