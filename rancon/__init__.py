@@ -17,6 +17,7 @@ import time
 
 from rancon import settings
 from rancon import tools
+from .version import __version__
 
 import uvloop
 import prometheus_client.exposition

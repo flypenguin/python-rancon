@@ -7,7 +7,9 @@ from pip.download import PipSession
 import io
 
 
-VERSION = "0.11.1"
+# use bumpversion to increase version number!!!
+from rancon.version import __version__
+
 
 # auto-generate requirements from requirements.txt
 install_reqs = parse_requirements("./requirements.txt", session=PipSession())
@@ -22,12 +24,12 @@ long_description = (
 setup(
     name         = 'rancon',
     packages     = find_packages(),
-    version      = VERSION,
+    version      = __version__,
     description  = 'A python tool which adds Rancher services to Consul based on label selectors',
     author       = 'Axel Bock',
     author_email = 'mr.axel.bock@gmail.com',
     url          = 'https://github.com/flypenguin/python-rancon',
-    download_url = 'https://github.com/flypenguin/python-rancon/tarball/{}'.format(VERSION),
+    download_url = 'https://github.com/flypenguin/python-rancon/tarball/{}'.format(__version__),
     keywords     = ['rancher', 'api', 'consul'],
     install_requires = reqs,
     long_description = long_description,
