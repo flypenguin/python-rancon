@@ -7,7 +7,9 @@ from pip.download import PipSession
 import io
 
 
-VERSION = "0.11.1"
+# use bumpversion to increase version number!!!
+from rancon.version import VERSION
+
 
 # auto-generate requirements from requirements.txt
 install_reqs = parse_requirements("./requirements.txt", session=PipSession())
