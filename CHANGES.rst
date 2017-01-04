@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+0.12.0
+------
+
+Date: 2017-01-04
+
+- FEATURE: add version number to '/' URL path & prometheus metrics
+
+
 0.11.1
 ------
 
