@@ -35,7 +35,7 @@ app = Sanic()
 @app.route("/")
 async def index(request):
     """ returns a hello string """
-    return text("rancon :)")
+    return text(f"rancon v{__version__} :)")
 
 
 @app.route("/metrics")
@@ -85,6 +85,10 @@ METRIC_SUCCESSFUL_DEREGS = Counter('rancon_successful_deregistrations',
 METRIC_FAILED_DEREGS = Counter('rancon_failed_deregistrations',
                                'Number of failed service deregistrations, '
                                'UNUSED')
+
+METRIC_VERSION = Gauge('rancon_version',
+                         'Rancon version number',
+                         ('version',)).labels(__version__).set(1)
 
 
 @ROUTE_TIME.time()
