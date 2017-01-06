@@ -79,6 +79,9 @@ METRIC_SUCCESSFUL_REGS = Counter('rancon_successful_registrations',
 METRIC_FAILED_REGS = Counter('rancon_failed_registrations',
                              'Number of failed service registrations')
 
+METRIC_RAISED_REGS = Counter('rancon_registration_exceptions',
+                             'Number of exception during service registrations')
+
 METRIC_SUCCESSFUL_DEREGS = Counter('rancon_successful_deregistrations',
                                    'Number of services deregistered, UNUSED')
 
@@ -108,12 +111,13 @@ def route_services(schedule_next=5, loop=None):
 
     METRIC_SERVICES_FOUND.set(len(services_to_route))
     for service in services_to_route:
-        success, routed_service = backend.register(service)
-        registered_services.append(routed_service)
-        if success:
-            METRIC_SUCCESSFUL_REGS.inc()
-        else:
-            METRIC_FAILED_REGS.inc()
+        with METRIC_RAISED_REGS.count_exceptions():
+            success, routed_service = backend.register(service)
+            registered_services.append(routed_service)
+            if success:
+                METRIC_SUCCESSFUL_REGS.inc()
+            else:
+                METRIC_FAILED_REGS.inc()
 
     if len(registered_services) == 0:
         log.debug("No services registered (of {} services found)"

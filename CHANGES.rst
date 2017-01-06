@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+0.13.0
+------
+
+Date: 2017-01-06
+
+- FEATURE: add metric "rancon_registration_exceptions"
+
+
 0.12.0
 ------
 
