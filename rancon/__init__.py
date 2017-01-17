@@ -35,7 +35,7 @@ app = Sanic()
 @app.route("/")
 async def index(request):
     """ returns a hello string """
-    return text(f"rancon v{__version__} :)")
+    return text("rancon v{} :)".format())
 
 
 @app.route("/metrics")
