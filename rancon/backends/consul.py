@@ -58,6 +58,8 @@ class ConsulBackend(BackendBase):
             # create consul instance and put in cache
             self.consul_inst_cache[consul_url] = \
                 consul.Consul(host=host, port=port, scheme=parsed_url.scheme)
+            self.log.debug("CREATE consul instance for {}".format(consul_url))
+        self.log.debug("GET consul instance for {}".format(consul_url))
         return self.consul_inst_cache[consul_url]
 
     def register(self, service) -> (bool, str):
