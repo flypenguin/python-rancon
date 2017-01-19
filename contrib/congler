@@ -1,0 +1,157 @@
+#!/usr/bin/env python
+
+import consul
+
+import urllib.parse
+from pprint import pprint
+from argparse import ArgumentParser
+
+
+args = None
+consul_inst_cache = {}
+
+
+def _get_consul_for_url(consul_url):
+    if consul_url not in consul_inst_cache:
+        parsed_url = urllib.parse.urlparse(consul_url)
+        if ":" in parsed_url.netloc:  # port specified?
+            items = parsed_url.netloc.split(":")  # extract and use
+            host, port = (items[0], int(items[1]))
+        else:
+            host = parsed_url.netloc
+            port = 8500
+        # create consul instance and put in cache
+        consul_inst_cache[consul_url] = \
+            consul.Consul(host=host, port=port, scheme=parsed_url.scheme)
+    return consul_inst_cache[consul_url]
+
+
+def _get_consul_for_service(consul_url, consul_svc):
+    pu = urllib.parse.urlparse(consul_url)
+    consul_port = "" if ":" not in pu.netloc else ":" + pu.netloc.split(":")[1]
+    tmp = "{}://{}{}".format(pu.scheme, consul_svc['Address'], consul_port)
+    return _get_consul_for_url(tmp)
+
+
+def _get_all_service_names():
+    con = _get_consul_for_url(args.consul_url)
+    return [key for key, value in con.catalog.services()[1].items()]
+
+
+def _get_all_service_tags():
+    con = _get_consul_for_url(args.consul_url)
+    # gives us: { SVC_NAME: [SVC_TAG,...] }
+    svcs = con.catalog.services()[1]
+    tags = []
+    for svc, svc_tags in svcs.items():
+        tags += svc_tags
+    return list(set(tags))
+
+
+def _get_all_services() -> list:
+    """
+    Returns a list of consul service dicts
+    :return: A list like [SVC1, ...]
+    """
+    # now, get the consul service dict for each service name.
+    # catalog.service() returns (INDX, [NODE1, ...]), where NODEx is a dict
+    con = _get_consul_for_url(args.consul_url)
+    chk_svc_names = _get_all_service_names()
+    chk_svcs = []
+    for svc_name in chk_svc_names:
+        chk_svcs += con.catalog.service(svc_name)[1]
+    return chk_svcs
+
+
+def _unregister(svc):
+    """
+    Deregisters a service from consul.
+    :param service: The service dict of the service to be deregistered.
+    :return: True on success, False on failure
+    """
+    con = _get_consul_for_service(args.consul_url, svc)
+    res = con.agent.service.deregister(svc['ServiceID'])
+    status = "OK" if res else "FAIL"
+    print("DEREGISTER_{:<7} CONSUL {:<40}    ID {}"
+          .format(status, con.http.base_uri, svc['ServiceID']))
+
+
+def del_by_id():
+    svcs = _get_all_services()
+    filtered = filter(lambda x: args.service_id == x['ServiceID'], svcs)
+    for svc in filtered:
+        _unregister(svc)
+
+
+def del_by_name():
+    svcs = _get_all_services()
+    filtered = filter(lambda x: args.service_name == x['ServiceName'], svcs)
+    for svc in filtered:
+        _unregister(svc)
+
+
+def del_by_tag():
+    svcs = _get_all_services()
+    filtered = filter(lambda x: args.tag_name in x['ServiceTags'], svcs)
+    for svc in filtered:
+        _unregister(svc)
+
+
+def list_services():
+    svcs = _get_all_service_names()
+    for svc in sorted(svcs):
+        print(svc)
+
+
+def list_tags():
+    tags = _get_all_service_tags()
+    for tag in sorted(tags):
+        print(tag)
+
+
+def service_info():
+    svcs = _get_all_services()
+    filtered = filter(lambda x: args.service_name == x['ServiceName'], svcs)
+    pprint(list(filtered))
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-c", "--consul-url",
+                        default="http://localhost:8500",
+                        help="Specify consul URL to use. "
+                             "Default: http://localhost:8500")
+
+    subs = parser.add_subparsers(dest='subparser_name')
+
+    sub = subs.add_parser('list-services')
+    sub = subs.add_parser('list-tags')
+
+    sub = subs.add_parser('service-info')
+    sub.add_argument("service_name",
+                     help="Print detailed information about a service")
+
+    sub = subs.add_parser('del-by-name')
+    sub.add_argument("service_name",
+                     help="Name of the service to delete")
+
+    sub = subs.add_parser('del-by-id')
+    sub.add_argument("service_id",
+                     help="ID of the service to delete")
+
+    sub = subs.add_parser('del-by-tag')
+    sub.add_argument("tag_name",
+                     help="Delete services with this tag")
+
+
+
+    args = parser.parse_args()
+
+    {
+        "del-by-id": del_by_id,
+        "del-by-name": del_by_name,
+        "del-by-tag": del_by_tag,
+        "list-services": list_services,
+        "list-tags": list_tags,
+        "service-info": service_info,
+    }[args.subparser_name]()
