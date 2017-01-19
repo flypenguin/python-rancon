@@ -5,19 +5,21 @@
 ADD_PARAMS=""
 
 if [ ! -z "$CATTLE_URL" ]; then
-    echo "STARTUP: Detected CATTLE_URL: $CATTLE_URL"
+    echo "STARTUP: "
+    echo "    Detected CATTLE_URL: $CATTLE_URL"
     ADD_PARAMS="-s url=$CATTLE_URL"
     # we just assume we have rancher metadata access
     ENV_NAME=$(curl http://rancher-metadata/latest/self/stack/environment_name 2>/dev/null)
     if [ "$?" == "0" ]; then
-        echo "STARTUP: Found environment '$ENV_NAME'"
+        echo "    Found environment '$ENV_NAME'"
         CLEANUP=$(echo $CATTLE_URL | sed -r 's%https?://%%g' | cut -d/ -f1 | tr '[[:upper:]]' '[[:lower:]]' | sed -r 's/[^A-Za-z0-9_-]/-/g')
+        echo "    Using cleanup ID  '$CLEANUP'"
         ADD_PARAMS=" $ADD_PARAMS -b cleanup_id=$CLEANUP"
     fi
 fi
 
 if [ ! -z "$CATTLE_ACCESS_KEY" -a ! -z "$CATTLE_SECRET_KEY" ]; then
-    echo "STARTUP: Detected login credentials"
+    echo "    Detected login credentials"
     ADD_PARAMS="$ADD_PARAMS -s accesskey=$CATTLE_ACCESS_KEY -s secretkey=$CATTLE_SECRET_KEY"
 fi
 
