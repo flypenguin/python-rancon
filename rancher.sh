@@ -11,7 +11,7 @@ if [ ! -z "$CATTLE_URL" ]; then
     ENV_NAME=$(curl http://rancher-metadata/latest/self/stack/environment_name 2>/dev/null)
     if [ "$?" == "0" ]; then
         echo "STARTUP: Found environment '$ENV_NAME'"
-        CLEANUP=$(echo $ENV_NAME | tr '[[:upper:]]' '[[:lower:]]' | sed -r 's/[^A-Za-z0-9_-]/_/g')
+        CLEANUP=$(echo $CATTLE_URL | sed -r 's%https?://%%g' | cut -d/ -f1 | tr '[[:upper:]]' '[[:lower:]]' | sed -r 's/[^A-Za-z0-9_-]/-/g')
         ADD_PARAMS=" $ADD_PARAMS -b cleanup_id=$CLEANUP"
     fi
 fi
