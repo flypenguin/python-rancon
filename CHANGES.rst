@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+0.17.0
+------
+
+Date: 2017-01-19
+
+- FIX: again some critical fixes in consul backend (don't use v0.16)
+- FIX: cleanup ID now includes rancher environment name (rancher.sh change)
+- FEATURE: contrib/congler helper added, script to delete and list services
+
+
 0.16.0
 ------
 
