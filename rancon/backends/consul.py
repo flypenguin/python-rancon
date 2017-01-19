@@ -143,8 +143,24 @@ class ConsulBackend(BackendBase):
                               .format(chk_svc['ServiceID'],
                                       chk_svc['ServiceAddress'],
                                       chk_svc['ServicePort']))
-                consul_inst = self._get_consul_for(
-                    self._convert_to_service(chk_svc))
+                # okay. we convert the *consul* service back to a *service*
+                # that we get as input from the "source", originally. now,
+                # for consul we don't use the service host to register or
+                # unregister, but we have to use the correct consul instance.
+                # IF we use a dynamic consul service (i.e. %SOMETHING% in the
+                # consul url), most probably the %HOST% is used to determine
+                # the consul instance. so we override the host= field in the
+                # converted service, thus a dynamic consul url would be
+                # replaced using the correct host (the CONSUL host) instead
+                # of the SERVICE host. although they should not, the MIGHT
+                # differ.
+                # STEP 1 - conversion with host= override
+                svc_tmp = self._convert_to_service(
+                    chk_svc,
+                    host=chk_svc['Address'])
+                # STEP 2 - get consul instance from service
+                consul_inst = self._get_consul_for(svc_tmp)
+                # STEP 3 - unregister service
                 consul_inst.agent.service.deregister(chk_svc['ServiceID'])
 
     def _get_tags(self, service):
@@ -162,14 +178,16 @@ class ConsulBackend(BackendBase):
         return re.sub(r"[^a-z0-9-]", "-", tmp)
 
     @staticmethod
-    def _convert_to_service(consul_service):
-        return DotMap({
+    def _convert_to_service(consul_service, **override_values):
+        tmp = {
             'host': consul_service['ServiceAddress'],
             'port': consul_service['ServicePort'],
             'name': consul_service['ServiceName'],
             'tags': consul_service['ServiceTags'],
             'id':   consul_service['ServiceID'],
-        })
+        }
+        return {**tmp, **override_values}
+
 
 def get():
     """ returns this model's main class """
