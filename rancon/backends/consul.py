@@ -186,7 +186,7 @@ class ConsulBackend(BackendBase):
             'tags': consul_service['ServiceTags'],
             'id':   consul_service['ServiceID'],
         }
-        return {**tmp, **override_values}
+        return DotMap({**tmp, **override_values})
 
 
 def get():
