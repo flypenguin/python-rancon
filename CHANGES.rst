@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+0.16.0
+------
+
+Date: 2017-01-19
+
+- FIX: small internal bug fix which should never have triggered
+- CHANGE: cleanup ID now different, removal of standard "rancon" tag
+- CHANGE: output of rancher.sh a bit different
+- CHANGE: log outputs changed partially
+- INTERNAL: some code refactorings
+
+
 0.15.0
 ------
 
