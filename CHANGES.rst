@@ -1,12 +1,29 @@
 CHANGELOG
 =========
 
-0.13.0
+0.15.0
+------
+
+Date: 2017-01-19
+
+- FEATURE: make consul urls dynamic (use %HOST% etc. placeholders)
+- FEATURE: deregistering uses the correct consul instances, not blindly "the ones registered with"
+
+
+0.14.0
 ------
 
 Date: 2017-01-06
 
 - FEATURE: add metric "rancon_registration_exceptions"
+
+
+0.13.0
+------
+
+Date: 2017-01-05
+
+- Very confused version. Maybe it's 0.14.0 already? Don't use.
 
 
 0.12.0
