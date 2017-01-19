@@ -81,13 +81,17 @@ class ConsulBackend(BackendBase):
         PROM_REGISTER_SERVICE_TIME.observe(time.time() - start)
 
         if success:
-            self.log.info("REGISTER: {} using {} / {} (cleanup id: {})"
+            self.log.info("REGISTER: "
+                          "{} NAME={} ID={} CLEANUP_ID={} CONSUL_URL={}"
                           .format(service, svc_name, svc_id,
-                                  self._get_cleanup_tag()))
+                                  self._get_cleanup_tag(),
+                                  con.http.base_uri))
         else:
-            self.log.warn("REGISTER: FAILED registering "
-                          "service {} using {} / {}"
-                          .format(service, svc_name, svc_id))
+            self.log.warn("REGISTER_FAIL: "
+                          "{} NAME={} ID={} CLEANUP_ID={} CONSUL_URL={}"
+                          .format(service, svc_name, svc_id,
+                                  self._get_cleanup_tag(),
+                                  con.http.base_uri))
         return success, svc_id
 
     def cleanup(self, keep_services):
@@ -161,7 +165,15 @@ class ConsulBackend(BackendBase):
                 # STEP 2 - get consul instance from service
                 consul_inst = self._get_consul_for(svc_tmp)
                 # STEP 3 - unregister service
-                consul_inst.agent.service.deregister(chk_svc['ServiceID'])
+                res = consul_inst.agent.service.deregister(chk_svc['ServiceID'])
+                # FINALLY - log
+                rs = "" if res else "_FAIL"
+                lf = self.log.info if res else self.log.warn
+                ls = "UNREGISTER{}: " \
+                     "{} ID={} CLEANUP_ID={} CONSUL_URL={}" \
+                     .format(rs, svc_tmp.name, svc_tmp.id,
+                             check_tag, con.http.base_uri)
+                lf(ls)
 
     def _get_tags(self, service):
         tag_list_str = service.get('tag', '')

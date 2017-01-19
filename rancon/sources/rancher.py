@@ -38,9 +38,9 @@ class RancherSource(SourceBase):
             service.name, ",".join(labels.keys())))
         for label in labels:
             if label == 'rancon' or label.startswith("rancon."):
-                self.log.info("EVAL: found matching service '{}' "
-                              "by label '{}'"
-                              .format(service.name, label))
+                self.log.debug("EVAL: found matching service '{}' "
+                               "by label '{}'"
+                               .format(service.name, label))
                 return True
         return False
 
