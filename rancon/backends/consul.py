@@ -166,12 +166,12 @@ class ConsulBackend(BackendBase):
     def _get_tags(self, service):
         tag_list_str = service.get('tag', '')
         tag_list = tag_list_str.split(",") if tag_list_str else []
-        return [tag_replace(x, service).strip().lower() for x in tag_list] + \
-               [self._get_cleanup_tag(),
-                'rancon']
+        rv = [tag_replace(x, service).strip().lower() for x in tag_list]
+        rv.append(self._get_cleanup_tag())
+        return rv
 
     def _get_cleanup_tag(self):
-        return "rancon-cleanup-id-{}".format(self.cleanup_id)
+        return "rancon-{}".format(self.cleanup_id)
 
     def _get_service_id(self, service):
         tmp = tag_replace(self.id_schema, service).lower()
