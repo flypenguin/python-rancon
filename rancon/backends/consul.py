@@ -40,6 +40,8 @@ class ConsulBackend(BackendBase):
         self.log.info("CONSUL INIT: url={}".format(url))
         self.log.info("CONSUL INIT: id_schema={}".format(self.id_schema))
         self.log.info("CONSUL INIT: cleanup_id={}".format(self.cleanup_id))
+        # internal variables
+        self.service_cache = None
         # no consul instance here now, cause we need to allow for dynamic
         # URLs (http://%HOST%:1234)
 
@@ -61,6 +63,58 @@ class ConsulBackend(BackendBase):
             self.log.debug("CREATE consul instance for {}".format(consul_url))
         self.log.debug("GET consul instance for {}".format(consul_url))
         return self.consul_inst_cache[consul_url]
+
+    def _get_managed_services(self, cached=False) -> list:
+        """
+        Calls consul to build a list of all services managed by this rancon
+        instance. Will return a list of dicts, whereas the dicts are in the
+        "consul format" (i.e. not the format we use to pass services around
+        between front- and backend, but the format that comes out of the
+        consul API).
+        :param cached: Whether to use the cache or not
+        :return: [consul_service_0, ...]
+        """
+        if len(self.consul_inst_cache) == 0:
+            # no services registered, so we don't have any consul instance.
+            # if we dont have one, just return (cause we can't connect to
+            # anything, right?)
+            return []
+
+        if cached and self.service_cache is not None:
+            return self.service_cache
+
+        # take any consul instance to get the service list, py3 style
+        con = next(iter(self.consul_inst_cache.values()))
+        check_tag = self._get_cleanup_tag()
+
+        # one call to consul. returns (INDX, {SVC_NAME:[SVC_TAGS,...], ...})
+        # so we want only the dict: {SVC_NAME: SVC_TAGS, ...}
+        _tmp = con.catalog.services()[1]
+        # ... and from that we constract a list of service names only
+        chk_svc_names = [
+            svc_name for svc_name, svc_tags in _tmp.items()
+            if check_tag in svc_tags
+            ]
+
+        # now, get the consul service dict for each service name.
+        # catalog.service() returns (INDX, [NODE1, ...]), where NODEx is a dict
+        chk_svcs = []
+        for svc_name in chk_svc_names:
+            chk_svcs += con.catalog.service(svc_name)[1]
+
+        # now we have the consul "service" dicts in a list. let's filter them -
+        # again - by check_tag (kinda super kinky, but *in theory* we can have
+        # a service which is created by rancon, and an alternative which is
+        # not. we only want to remove the one fro rancon, right?
+        filtered = filter(
+            lambda x: 'ServiceTags' in x and check_tag in x['ServiceTags'],
+            chk_svcs
+        )
+
+        # now we have a list of consul service dicts of all rancon-managed
+        # services. yaay!
+        self.service_cache = list(filtered)
+        return self.service_cache
 
     def register(self, service) -> (bool, str):
         """Register the service in consul.
@@ -103,41 +157,9 @@ class ConsulBackend(BackendBase):
         :param keep_services: A list of service ids [id1, id2, ...]
         :return: None
         """
-        if len(self.consul_inst_cache) == 0:
-            # no services registered, so we don't have any consul instance.
-            # if we dont have one, just return (cause we can't connect to
-            # anything, right?)
-            return
+        managed_services = self._get_managed_services()
 
-        # take any consul instance to get the service list, py3 style
-        con = next(iter(self.consul_inst_cache.values()))
-        check_tag = self._get_cleanup_tag()
-
-        # one call to consul. returns (INDX, {SVC_NAME:[SVC_TAGS,...], ...})
-        # so we want only the dict: {SVC_NAME: SVC_TAGS, ...}
-        _tmp = con.catalog.services()[1]
-        chk_svc_names = [
-            svc_name for svc_name, svc_tags in _tmp.items()
-            if check_tag in svc_tags
-        ]
-
-        # a LOT of calls to consul (we don't get anything but service name and
-        # service tags from previous one ... unfortunately). catalog.service()
-        # returns (INDX, [NODE1, ...]), where NODEx is a dict
-        chk_svcs = []
-        for svc_name in chk_svc_names:
-            chk_svcs += con.catalog.service(svc_name)[1]
-
-        # now we have the consul "service" dicts in a list. let's filter them -
-        # again - by check_tag (kinda super kinky, but *in theory* we can have
-        # a service which is created by rancon, and an alternative which is
-        # not. we only want to remove the one fro rancon, right?
-        filtered = filter(
-            lambda x: 'ServiceTags' in x and check_tag in x['ServiceTags'],
-            chk_svcs
-        )
-
-        for chk_svc in filtered:
+        for chk_svc in managed_services:
             # fields: Service{Port,Tags,ID,Name,Address}
             # The 'Address' field (withOUT 'Service' prefix!) depicts the
             # responsible consul node it seems!! So let's use this for
