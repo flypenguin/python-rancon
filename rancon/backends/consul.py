@@ -158,6 +158,7 @@ class ConsulBackend(BackendBase):
         :return: None
         """
         managed_services = self._get_managed_services()
+        check_tag = self._get_cleanup_tag()
 
         for chk_svc in managed_services:
             # fields: Service{Port,Tags,ID,Name,Address}
@@ -194,7 +195,7 @@ class ConsulBackend(BackendBase):
                 ls = "UNREGISTER{}: " \
                      "{} ID={} CLEANUP_ID={} CONSUL_URL={}" \
                      .format(rs, svc_tmp.name, svc_tmp.id,
-                             check_tag, con.http.base_uri)
+                             check_tag, consul_inst.http.base_uri)
                 lf(ls)
 
     def _get_tags(self, service):
