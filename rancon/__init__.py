@@ -29,13 +29,13 @@ from sanic.response import HTTPResponse, text
 
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-app = Sanic()
+app = Sanic(__name__)
 
 
 @app.route("/")
 async def index(request):
     """ returns a hello string """
-    return text("rancon v{} :)".format())
+    return text("rancon v{} :)".format(__version__))
 
 
 @app.route("/metrics")
