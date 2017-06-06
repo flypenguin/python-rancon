@@ -1,7 +1,8 @@
 cattleprod>=0.6.0
 python-consul==0.6.0
-dotmap
-requests
-sanic
-uvloop
-prometheus_client
+dotmap~=1.0
+requests~=2.0
+sanic~=0.0
+uvloop~=0.0
+prometheus_client~=0.0
+aiohttp~=2.0
