@@ -88,16 +88,10 @@ def parse_params(sys_argv):
                              "Default: $RANCON_HANGUP_SECONDS or 30",
                         type=int,
                         default=int(environ.get("RANCON_HANGUP_SECONDS", "30")))
-    parser.add_argument("-q", "--quiet",
-                        help="Decreases verbosity level, use multiple times to "
-                             "decrease further. Do not combine with -v. "
-                             "Default: $RANCON_VERBOSE.",
-                        action="count",
-                        default=0)
     parser.add_argument("-v", "--verbose",
-                        help="Decreases verbosity level, use multiple times to "
-                             "decrease further. Not using -v at all is "
-                             "equivalent to -vvv. Do not combine with -q. "
+                        help="Increases verbosity level, use multiple times to "
+                             "increase further. Not using -v at all is "
+                             "equivalent to -vvv."
                              "Default: $RANCON_VERBOSE or 3",
                         action="count",
                         default=int(environ.get('RANCON_VERBOSE', '3')))
