@@ -100,10 +100,8 @@ def parse_params(sys_argv):
     errors = []
 
     # first, logging.
-    log_interval = log.DEBUG-log.NOTSET
-    loglevel = log_interval + log.CRITICAL - \
-               log_interval * args.verbose + \
-               log_interval * args.quiet
+    log_interval = log.DEBUG   # log.DEBUG - log.NOTSET = 10-0 ...
+    loglevel = log_interval + log.CRITICAL - log_interval * args.verbose
     logformat = "%(name)s: %(message)s"
     log.basicConfig(format=logformat)
 
