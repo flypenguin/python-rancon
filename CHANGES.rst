@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+0.17.1
+------
+
+Date: 2017-06-07
+
+- FIX: made "/" URL path work again (threw HTTP 500 because of code error)
+- FIX: way better exception handling, the registration cycle is no longer aborted if an exception occurs
+- FIX: the consul backend handles a connection error gracefully now
+
+
 0.17.0
 ------
 
