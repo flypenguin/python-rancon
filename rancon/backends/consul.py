@@ -4,6 +4,7 @@ import re
 import urllib.parse
 import time
 
+import requests
 import consul
 import prometheus_client.core
 from dotmap import DotMap
@@ -120,18 +121,24 @@ class ConsulBackend(BackendBase):
         """Register the service in consul.
         :return: (BOOL(success), STR(svc_id))
         """
-        con = self._get_consul_for(service)
         # lower everything, consul should not have upper/lower case distinction
         svc_id = self._get_service_id(service)
         svc_name = service.name.lower()
 
         start = time.time()
-        success = con.agent.service.register(
-            svc_name,
-            svc_id,
-            address=service.host, port=int(service.port),
-            tags=self._get_tags(service),
-        )
+        catched = None
+        try:
+            con = self._get_consul_for(service)
+            success = con.agent.service.register(
+                svc_name,
+                svc_id,
+                address=service.host, port=int(service.port),
+                tags=self._get_tags(service),
+            )
+        except requests.exceptions.ConnectionError as e:
+            success = False
+            catched = e
+
         PROM_REGISTER_SERVICE_TIME.observe(time.time() - start)
 
         if success:
@@ -141,11 +148,17 @@ class ConsulBackend(BackendBase):
                                   self._get_cleanup_tag(),
                                   con.http.base_uri))
         else:
-            self.log.warn("REGISTER_FAIL: "
-                          "{} NAME={} ID={} CLEANUP_ID={} CONSUL_URL={}"
-                          .format(service, svc_name, svc_id,
-                                  self._get_cleanup_tag(),
-                                  con.http.base_uri))
+            if catched:
+                additional_message = " MESSAGE={}".format(str(catched))
+                logger = self.log.error
+            else:
+                logger = self.log.warn
+            logger("REGISTER_FAIL: "
+                   "{} NAME={} ID={} CLEANUP_ID={} CONSUL_URL={}{}"
+                   .format(service, svc_name, svc_id,
+                           self._get_cleanup_tag(),
+                           con.http.base_uri,
+                           additional_message))
         return success, svc_id
 
     def cleanup(self, keep_services):

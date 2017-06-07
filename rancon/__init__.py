@@ -111,9 +111,16 @@ def route_services(schedule_next=5, loop=None):
 
     METRIC_SERVICES_FOUND.set(len(services_to_route))
     for service in services_to_route:
-        with METRIC_RAISED_REGS.count_exceptions():
-            success, routed_service = backend.register(service)
-            registered_services.append(routed_service)
+            try:
+                # I think that will re-raise or pass the exception thorug,
+                # so we also need to catch it manually
+                with METRIC_RAISED_REGS.count_exceptions():
+                    success, routed_service = backend.register(service)
+                registered_services.append(routed_service)
+            except Exception as e:
+                success = False
+                log.error("EXCEPTION CAUGHT WHILE REGSITERING '{}': {}"
+                          .format(str(service), str(e)))
             if success:
                 METRIC_SUCCESSFUL_REGS.inc()
             else:
